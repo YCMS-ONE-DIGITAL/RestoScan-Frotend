@@ -1,26 +1,25 @@
-import { useEffect, useState } from "react";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import DashboardLayout from "./components/layout/DashboardLayout";
+import Menus from "./pages/Menus";
+import MenuList from "./pages/menus/MenuList";
+// import Tables from "./pages/Tables";
+// import Reservations from "./pages/Reservations";
+// import Dashboard from "./pages/Dashboard";
+
+const allPageRouter = createBrowserRouter([
+  {
+    path: "/",
+    element: <DashboardLayout />, // 👈 Common layout for all pages
+    children: [
+      { path: "/menus", element: <MenuList /> }, // ✅ load your MenuList here
+    ],
+  },
+]);
 
 function App() {
-  const [message, setMessage] = useState("Connecting to backend...");
-
-  useEffect(() => {
-    // Change URL if your backend runs on a different port
-    fetch("http://localhost:5000/api/test")
-      .then((res) => res.json())
-      .then((data) => setMessage(data.message))
-      .catch((err) => setMessage("❌ Connection failed: " + err.message));
-  }, []);
-
   return (
-    <div
-      style={{
-        fontFamily: "Arial, sans-serif",
-        textAlign: "center",
-        marginTop: "50px",
-      }}
-    >
-      <h1>Frontend ↔ Backend Test</h1>
-      <p style={{ fontSize: "18px", color: "#333" }}>{message}</p>
+    <div className="App">
+      <RouterProvider router={allPageRouter} />
     </div>
   );
 }
