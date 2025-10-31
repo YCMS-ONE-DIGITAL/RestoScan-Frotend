@@ -6,11 +6,21 @@ import MenuItemsList from "./pages/menus/MenuItemList";
 import CategoryList from "./pages/categories/CategoryList";
 import AuthForm  from "./components/layout/AuthForm";
 import HomePage from "./pages/Home";
+import MenuPage from "./CustomerWebsite/pages/MenuPage";
+import CustomerWebsite from "./CustomerWebsite/Main"
 // import Tables from "./pages/Tables";
 // import Reservations from "./pages/Reservations";
 // import Dashboard from "./pages/Dashboard";
 
 const allPageRouter = createBrowserRouter([
+   {
+    path: "/customerwebsite",
+    element: <CustomerWebsite />, // 👈 no layout, standalone page
+  },
+   {
+  path: "/menu", 
+    element: <MenuPage /> ,// 👈 no layout, standalone page
+  },
    {
     path: "/",
     element: <HomePage />, // 👈 no layout, standalone page
