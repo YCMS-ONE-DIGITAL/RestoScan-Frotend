@@ -22,7 +22,7 @@ const allPageRouter = createBrowserRouter([
     element: <MenuPage /> ,// 👈 no layout, standalone page
   },
    {
-    path: "/",
+    path: "/homepage",
     element: <HomePage />, // 👈 no layout, standalone page
   },
    {
@@ -34,12 +34,12 @@ const allPageRouter = createBrowserRouter([
     element: <AuthForm />, // 👈 no layout, standalone page
   },
   {
-    path: "/admin",
+    path: "/",
     element: <DashboardLayout />, // 👈 Common layout for all pages
     children: [
-      { path: "admin/menus", element: <MenuList /> }, 
-      { path: "admin/menus/items", element: <MenuItemsList /> },
-      { path: "admin/menus/categories", element: <CategoryList /> },
+      { path: "/menus", element: <MenuList /> }, 
+      { path: "/menus/items", element: <MenuItemsList /> },
+      { path: "/menus/categories", element: <CategoryList /> },
     ],
   },
 ]);
