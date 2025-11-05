@@ -1,17 +1,16 @@
-// src/CustomerWebsite/pages/MenuPage.jsx
 import { useState } from "react";
-import { Search, ShoppingCart, Pizza, Beef, Coffee, Cake, Drumstick } from "lucide-react";
+import { Search, Users } from "lucide-react";
 import MenuItemCard from "../Components/MenuItemCard";
 import Footer from "./Footer";
-import { useNavigate } from "react-router-dom";
+import { useCart } from "../context/CardContext"; // ✅ added
 
 export default function MenuPage() {
- const [search, setSearch] = useState("");
+  const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [vegFilter, setVegFilter] = useState("all");
-  
-  // cart: { id: { item, quantity, note } }
-  const [cart, setCart] = useState({});
+
+  // ✅ using context instead of local state
+  const { addToCart, removeFromCart, updateNote, cartItems, cartCount, total } = useCart();
 
   const categories = [
     { id: "all", name: "All", img: "assets/customerwebsite/category/image.jpg" },
@@ -23,7 +22,7 @@ export default function MenuPage() {
   ];
 
   const menuItems = [
-    { id: 1, name: "Margherita Pizza", price: 249, img: "https://images.unsplash.com/photo-1601924582971-0302d2b7a9d4", type: "veg", category: "pizza", description:"hello hello Deliciously cooked with premium ingredients. Deliciously cooked with premium ingredients.Deliciously cooked with premium ingredients. Deliciously cooked with premium ingredients."},
+    { id: 1, name: "Margherita Pizza", price: 249, img: "https://images.unsplash.com/photo-1601924582971-0302d2b7a9d4", type: "veg", category: "pizza", description: "hello hello Deliciously cooked with premium ingredients." },
     { id: 2, name: "Pepperoni Pizza", price: 349, img: "https://images.unsplash.com/photo-1628840042765-0a5c5a351139", type: "nonveg", category: "pizza" },
     { id: 3, name: "Veg Burger", price: 199, img: "https://images.unsplash.com/photo-1550547660-d9450f859349", type: "veg", category: "burger" },
     { id: 4, name: "Chicken Burger", price: 249, img: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd", type: "nonveg", category: "burger" },
@@ -32,7 +31,7 @@ export default function MenuPage() {
     { id: 7, name: "Gulab Jamun", price: 99, img: "https://images.unsplash.com/photo-1624353365286-3f8d1dede8c3", type: "veg", category: "desserts" },
   ];
 
-  const filteredMenu = menuItems.filter(item => {
+  const filteredMenu = menuItems.filter((item) => {
     const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase());
     const matchesCategory = selectedCategory === "all" || item.category === selectedCategory;
     const matchesVegFilter =
@@ -42,66 +41,45 @@ export default function MenuPage() {
     return matchesSearch && matchesCategory && matchesVegFilter;
   });
 
-  // ADD TO CART
-  const handleAdd = (item) => {
-    setCart(prev => ({
-      ...prev,
-      [item.id]: {
-        item,
-        quantity: (prev[item.id]?.quantity || 0) + 1,
-        note: prev[item.id]?.note || ""
-      }
-    }));
-  };
-
-  // REMOVE FROM CART
-  const handleRemove = (id) => {
-    setCart(prev => {
-      const entry = prev[id];
-      if (!entry) return prev;
-      if (entry.quantity <= 1) {
-        const { [id]: _, ...rest } = prev;
-        return rest;
-      }
-      return { ...prev, [id]: { ...entry, quantity: entry.quantity - 1 } };
-    });
-  };
-
-  // UPDATE NOTE
-  const updateNote = (id, note) => {
-    setCart(prev => ({
-      ...prev,
-      [id]: { ...prev[id], note }
-    }));
-  };
-
-  // CALCULATE
-  const cartCount = Object.values(cart).reduce((sum, e) => sum + e.quantity, 0);
-  const total = Object.values(cart).reduce((sum, e) => sum + e.item.price * e.quantity, 0);
-
-  // CART ITEMS ARRAY
-  const cartItems = Object.values(cart).map(entry => ({
-    ...entry.item,
-    quantity: entry.quantity,
-    note: entry.note
-  }));
-
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
       {/* HEADER */}
       <header className="bg-white shadow-sm px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-orange-500 rounded-full" />
+          <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-gray-200">
+            <img
+              src="/assets/customerwebsite/category/image.jpg"
+              alt="Logo"
+              className="w-full h-full object-cover"
+            />
+          </div>
           <h1 className="font-bold text-gray-800">RestoScan</h1>
         </div>
-        <div className="relative">
-          <ShoppingCart className="w-6 h-6 text-gray-700" />
-          {cartCount > 0 && (
-            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold">
-              {cartCount}
-            </span>
-          )}
+       <div className=" flex items-center gap-2">
+        <div className="flex items-center gap-1 bg-[#f2f4f6] border  text-xs px-3 py-1.5 rounded-full shadow text-dark active:scale-95 transition">
+          <svg width="16" height="17" viewBox="0 0 16 17" fill="none">
+            <path d="M8.16016 6.77588V13.0794" stroke="#000000" strokeLinecap="round"></path>
+            <path
+              d="M8.16021 6.61556C11.3806 6.61556 13.9913 6.12606 13.9913 5.52223C13.9913 4.9184 11.3806 4.42889 8.16021 4.42889C4.93978 4.42889 2.3291 4.9184 2.3291 5.52223C2.3291 6.12606 4.93978 6.61556 8.16021 6.61556Z"
+              stroke="#000000"
+            ></path>
+            <path d="M5.61597 13.4641H10.7043" stroke="#000000" strokeLinecap="round"></path>
+          </svg>
+          <span className="  text-dark text-xs rounded-full w-3 h-3 flex items-center justify-center font-bold">
+            1
+          </span>
+          </div>
+
+           <button
+        onClick={() => console.log("Group Order Clicked")}
+        className="flex items-center gap-1 bg-[#f2f4f6] border  text-xs px-3 py-1.5 rounded-full shadow text-dark active:scale-95 transition"
+      >
+        <Users size={13} /> Group Order
+      </button>
         </div>
+
+
+        
       </header>
 
       {/* SEARCH + FILTERS */}
@@ -122,14 +100,22 @@ export default function MenuPage() {
             <button
               onClick={() => setVegFilter("all")}
               className={`px-2.5 py-1.5 rounded-full text-xs font-medium transition-all flex-shrink-0
-                ${vegFilter === "all" ? "bg-orange-500 text-white shadow-sm" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
+                ${
+                  vegFilter === "all"
+                    ? "bg-orange-500 text-white shadow-sm"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
             >
               All
             </button>
             <button
               onClick={() => setVegFilter("veg")}
               className={`px-2.5 py-1.5 rounded-full text-xs font-medium transition-all flex-shrink-0 flex items-center gap-1
-                ${vegFilter === "veg" ? "bg-green-100 text-green-700 border border-green-300" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
+                ${
+                  vegFilter === "veg"
+                    ? "bg-green-100 text-green-700 border border-green-300"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
             >
               <div className="w-3 h-3 rounded border-2 border-green-600 flex items-center justify-center">
                 <div className="w-1.5 h-1.5 rounded-full bg-green-600" />
@@ -139,7 +125,11 @@ export default function MenuPage() {
             <button
               onClick={() => setVegFilter("nonveg")}
               className={`px-2.5 py-1.5 rounded-full text-xs font-medium transition-all flex-shrink-0 flex items-center gap-1
-                ${vegFilter === "nonveg" ? "bg-red-100 text-red-700 border border-red-300" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
+                ${
+                  vegFilter === "nonveg"
+                    ? "bg-red-100 text-red-700 border border-red-300"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
             >
               <div className="w-3 h-3 rounded border-2 border-red-600 flex items-center justify-center">
                 <div className="w-1.5 h-1.5 rounded-full bg-red-600" />
@@ -152,12 +142,16 @@ export default function MenuPage() {
         {/* CATEGORIES */}
         <div className="px-4 py-2">
           <div className="flex gap-3 overflow-x-auto scrollbar-hide whitespace-nowrap">
-            {categories.map(cat => (
+            {categories.map((cat) => (
               <button
                 key={cat.id}
                 onClick={() => setSelectedCategory(cat.id)}
                 className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-all duration-200 flex-shrink-0
-                  ${selectedCategory === cat.id ? "bg-orange-100 text-orange-600 shadow-sm" : "text-gray-600 hover:bg-gray-100"}`}
+                  ${
+                    selectedCategory === cat.id
+                      ? "bg-orange-100 text-orange-600 shadow-sm"
+                      : "text-gray-600 hover:bg-gray-100"
+                  }`}
               >
                 <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-gray-200">
                   <img src={cat.img} alt={cat.name} className="w-full h-full object-cover" />
@@ -172,27 +166,32 @@ export default function MenuPage() {
       {/* MENU LIST */}
       <div className="px-4 pt-3">
         {filteredMenu.length > 0 ? (
-          filteredMenu.map((item, idx) => (
-            <MenuItemCard
-             key={item.id}
-            item={item}
-            onAdd={handleAdd}
-            onRemove={() => handleRemove(item.id)}
-            quantity={cart[item.id]?.quantity || 0}
-            />
-          ))
+          filteredMenu.map((item) => {
+            const existing = cartItems.find((c) => c.id === item.id);
+            const quantity = existing ? existing.quantity : 0;
+
+            return (
+              <MenuItemCard
+                key={item.id}
+                item={item}
+                onAdd={() => addToCart(item)} // ✅ global add
+                onRemove={() => removeFromCart(item.id)} // ✅ global remove
+                quantity={quantity}
+              />
+            );
+          })
         ) : (
           <p className="text-center text-gray-500 py-8 text-sm">No items found</p>
         )}
       </div>
 
-      {/* FOOTER WITH CART MODAL */}
-      <Footer 
-       cartItems={cartItems}
+      {/* FOOTER */}
+      <Footer
+        cartItems={cartItems}
         cartCount={cartCount}
         total={total}
-        onUpdateQuantity={handleRemove}   // - बटण
-        onAddQuantity={handleAdd}         // + बटण
+        onAddQuantity={addToCart}
+        onUpdateQuantity={removeFromCart}
         onUpdateNote={updateNote}
       />
     </div>
