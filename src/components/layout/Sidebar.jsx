@@ -15,7 +15,9 @@ const navLinks = [
       { id: "/menus/categories", label: "Item Categories" },
     ],
   },
-  { id: "/tables", label: "Tables", icon: Table2 },
+    { id: "/tables", label: "Tables", icon: Table2 },
+
+  
   { id: "/reservations", label: "Reservations", icon: CalendarDays },
 ];
 
