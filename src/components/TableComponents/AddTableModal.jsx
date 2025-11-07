@@ -92,7 +92,7 @@ export default function AddEditTableModal({ isOpen, onClose, onSave, editTable }
             placeholder="Location (e.g. Window Side)"
             value={tableData.location}
             onChange={handleChange}
-            className="w-full border px-3 py-2 rounded"
+            className="w-full border px-3 py-2 rounded mb-3 text-gray-900 bg-white"
           />
           {errors.location && <p className="text-red-500 text-sm">{errors.location}</p>}
         </div>

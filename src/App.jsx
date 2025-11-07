@@ -11,6 +11,8 @@ import CustomerWebsite from "./CustomerWebsite/Main"
 import OrderHistory from "./CustomerWebsite/pages/OrderHistory";
 import Dashboard from "./pages/dashboard";
 import Tables from "./pages/Tables";
+import Orders from "./pages/Orders";
+import KOT from "./pages/KOT";
 // import Tables from "./pages/Tables";
 // import Reservations from "./pages/Reservations";
 // import Dashboard from "./pages/Dashboard";
@@ -45,6 +47,8 @@ const allPageRouter = createBrowserRouter([
     element: <DashboardLayout />, // 👈 Common layout for all pages
     children: [
       { path: "/dashboard", element: <Dashboard /> },
+      { path: "/orders", element: <Orders /> },
+      { path: "/orders/kot", element: <KOT /> },
       { path: "/tables", element: <Tables /> },
       { path: "/menus", element: <MenuList /> },
       { path: "/menus/items", element: <MenuItemsList /> },

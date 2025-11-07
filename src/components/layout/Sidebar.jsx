@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 
 const navLinks = [
   { id: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+
   {
     id: "/menus",
     label: "Menu",
@@ -13,6 +14,17 @@ const navLinks = [
       { id: "/menus", label: "Menus" },
       { id: "/menus/items", label: "Menu Items" },
       { id: "/menus/categories", label: "Item Categories" },
+    ],
+  },
+
+  {
+    id: "/orders",
+    label: "Orders",
+    icon: Utensils,
+    children: [
+      { id: "/orders", label: "Orders" },
+      { id: "/orders/kot", label: "KOT" },
+
     ],
   },
     { id: "/tables", label: "Tables", icon: Table2 },
