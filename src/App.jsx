@@ -13,6 +13,12 @@ import Dashboard from "./pages/dashboard";
 import Tables from "./pages/Tables";
 import Orders from "./pages/Orders";
 import KOT from "./pages/KOT";
+import Staff from "./pages/Staff"
+import { Customers } from "./pages/Customers";
+import Payments from "./pages/payments/payments";
+import PaymentDue from "./pages/payments/paymentdue";
+import POS from "./pages/Pos";
+import Settings from "./pages/Settings";
 // import Tables from "./pages/Tables";
 // import Reservations from "./pages/Reservations";
 // import Dashboard from "./pages/Dashboard";
@@ -53,6 +59,12 @@ const allPageRouter = createBrowserRouter([
       { path: "/menus", element: <MenuList /> },
       { path: "/menus/items", element: <MenuItemsList /> },
       { path: "/menus/categories", element: <CategoryList /> },
+      { path: "/staff", element: <Staff/> },
+      { path: "/customers", element: <Customers/> },
+      { path: "/payments", element: <Payments/> },
+      { path: "/payments/paymentdue", element: <PaymentDue/> },
+      { path: "/pos", element: <POS/> },
+      { path: "/settings", element: <Settings/> },
     ],
   },
 ]);

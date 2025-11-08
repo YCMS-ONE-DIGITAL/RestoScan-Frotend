@@ -1,6 +1,7 @@
 import StatCard from "../components/DashboardComponents/StatCard";
 import SalesChartCard from "../components/DashboardComponents/SalesChartCard";
 import OrderCard from "../components/DashboardComponents/OrderCard";
+import SalesChart from "../components/DashboardComponents/SalesChart";
 
 export default function Dashboard() {
     return (
@@ -34,9 +35,9 @@ export default function Dashboard() {
 
                 {/* Sales Chart */}
                 <div className="mt-6">
-                    <SalesChartCard value="$1200" percent="120000" subtitle="Sales This Month">
-                        {/* Chart will come here */}
-                    </SalesChartCard>
+                  <SalesChartCard value="$1200" percent="12" subtitle="Sales This Month">
+  <SalesChart />
+</SalesChartCard>
                 </div>
             </div>
 

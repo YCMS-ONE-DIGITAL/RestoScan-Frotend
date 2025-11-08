@@ -5,9 +5,7 @@ import { X } from "lucide-react";
 export default function QRModal({ isOpen, onClose, table }) {
   if (!isOpen || !table) return null;
 
-  // ✅ QR मध्ये जाणारा URL (इथे तुमच्या प्रोजेक्टचा link दे)
-  // const qrURL = `https://yourdomain.com/customer?table=${table.number}`;
-  const qrURL = `http://localhost:5173/customerwebsite`;
+const qrURL = `http://localhost:5173/customerwebsite?table=${table.number}`;
 
   // ✅ Download Function
   const downloadQR = () => {
@@ -22,17 +20,23 @@ export default function QRModal({ isOpen, onClose, table }) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[999]">
       <div className="bg-white p-6 rounded-xl w-full max-w-sm text-center relative">
-        {/* Close */}
+        {/* Close Button */}
         <button onClick={onClose} className="absolute top-3 right-3 text-gray-500">
           <X className="w-5 h-5" />
         </button>
 
+        {/* Title */}
         <h2 className="text-lg font-bold mb-4">QR Code for Table {table.number}</h2>
 
-        <QRCodeCanvas id="qr-code" value={qrURL} size={200} includeMargin />
+        {/* ✅ Center QR Code */}
+        <div className="flex justify-center items-center">
+          <QRCodeCanvas id="qr-code" value={qrURL} size={200} includeMargin />
+        </div>
 
-        <p className="text-xs text-gray-600 mt-3">{qrURL}</p>
+        {/* URL Text */}
+        <p className="text-xs text-gray-600 mt-3 break-all">{qrURL}</p>
 
+        {/* Download Button */}
         <button
           onClick={downloadQR}
           className="mt-4 bg-green-600 text-white px-4 py-2 rounded-lg"

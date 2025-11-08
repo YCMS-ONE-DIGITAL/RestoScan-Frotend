@@ -1,6 +1,15 @@
 // src/components/layout/Sidebar.jsx
 import { useNavigate, useLocation } from "react-router-dom";
-import { LayoutDashboard, Utensils, Table2, CalendarDays } from "lucide-react";
+import { useState, useEffect } from "react";
+import {
+  LayoutDashboard,
+  Utensils,
+  Table2,
+  UserStarIcon,
+  Users,
+  CreditCardIcon,
+  Settings
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navLinks = [
@@ -24,33 +33,57 @@ const navLinks = [
     children: [
       { id: "/orders", label: "Orders" },
       { id: "/orders/kot", label: "KOT" },
-
     ],
   },
-    { id: "/tables", label: "Tables", icon: Table2 },
 
-  
-  { id: "/reservations", label: "Reservations", icon: CalendarDays },
+  { id: "/tables", label: "Tables", icon: Table2 },
+  { id: "/pos", label: "POS", icon: Table2 },
+  { id: "/customers", label: "Customers", icon: Users },
+  { id: "/staff", label: "Staff", icon: UserStarIcon },
+
+  {
+    id: "/payments",
+    label: "Payments",
+    icon: CreditCardIcon,
+    children: [
+      { id: "/payments", label: "Payment" },
+      { id: "/payments/paymentdue", label: "Payment Due" },
+    ],
+  },
+
+  { id: "/settings", label: "Setting", icon: Settings },
 ];
 
 export default function Sidebar({ onNavigate }) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
 
+  // ✅ Restaurant Name (from localStorage or default)
+  const [restaurantName, setRestaurantName] = useState("Restaurant");
+
+  useEffect(() => {
+    const name = localStorage.getItem("restaurantName");
+    if (name) setRestaurantName(name);
+  }, []);
+
   const handleNav = (id) => {
     navigate(id);
-    if (onNavigate) onNavigate(); // Close drawer on mobile
+    if (onNavigate) onNavigate(); // Close drawer in mobile view
   };
 
   return (
     <aside className="w-64 bg-[#121826] text-white h-full p-4 flex flex-col">
+      {/* ✅ Restaurant Name Section */}
       <div className="flex items-center gap-2 mb-8">
-        <div className="bg-indigo-500 text-white w-8 h-8 flex items-center justify-center rounded-md font-bold">
-          T
+        <div className="bg-indigo-500 text-white w-8 h-8 flex items-center justify-center rounded-md font-bold uppercase">
+          {restaurantName?.charAt(0) || "R"}
         </div>
-        <span className="text-lg font-semibold">kokan katta</span>
+        <span className="text-lg font-semibold capitalize">
+          {restaurantName}
+        </span>
       </div>
 
+      {/* ✅ Navigation Links */}
       <nav className="space-y-2">
         {navLinks.map((link) => (
           <div key={link.id}>
