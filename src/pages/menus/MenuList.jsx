@@ -10,18 +10,18 @@ const MenuList = () => {
   const [selectedMenu, setSelectedMenu] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
 
-  // Fetch menus
+  // Fetch menus from Laravel
   const { data: menus, isLoading, error } = useQuery({
     queryKey: ["menus"],
     queryFn: async () => {
-      const res = await api.get("/menus");
+      const res = await api.get("/restaurant/menus");   // 👈 FIXED
       return res.data;
     },
   });
 
   // Delete mutation
   const deleteMutation = useMutation({
-    mutationFn: (id) => api.delete(`/menus/${id}`),
+    mutationFn: (id) => api.delete(`/restaurant/menus/${id}`), // 👈 FIXED
     onSuccess: () => {
       queryClient.invalidateQueries(["menus"]);
     },
@@ -63,7 +63,7 @@ const MenuList = () => {
         ))}
       </div>
 
-      {/* Form Dialog */}
+      {/* Add/Edit Form Modal */}
       {isFormOpen && (
         <MenuForm
           menu={selectedMenu}

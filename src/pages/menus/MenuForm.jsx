@@ -13,10 +13,15 @@ const MenuForm = ({ menu, onClose }) => {
     if (menu) setName(menu.name);
   }, [menu]);
 
+  // ADD + EDIT mutation
   const mutation = useMutation({
     mutationFn: async (data) => {
-      if (menu) return api.put(`/menus/${menu.id}`, data);
-      else return api.post("/menus", data);
+      // 👉 Editing
+      if (menu) {
+        return api.post(`/restaurant/menus/update/${menu.id}`, data);
+      }
+      // 👉 Creating
+      return api.post(`/restaurant/menus`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries(["menus"]);

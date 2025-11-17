@@ -20,16 +20,16 @@ const Navbar = () => {
 
   const toggleTheme = () =>
     setTheme(theme === "dark" ? "light" : "dark");
-const scrollToSection = (id) => {
-  const element = document.getElementById(id);
-  if (element) {
-    const yOffset = -80; // 👈 navbar height adjust kar (try -80 or -90)
-    const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+  const scrollToSection = (id) => {
+    const element = document.getElementById(id);
+    if (element) {
+      const yOffset = -80; // 👈 navbar height adjust kar (try -80 or -90)
+      const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
 
-    window.scrollTo({ top: y, behavior: "smooth" });
-    setIsOpen(false);
-  }
-};
+      window.scrollTo({ top: y, behavior: "smooth" });
+      setIsOpen(false);
+    }
+  };
 
 
   return (
@@ -91,7 +91,7 @@ const scrollToSection = (id) => {
           </button>
 
           <a
-            href="https://restoscan.com/login"
+            href="/login"
             className="px-4 py-2 text-sm font-semibold border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"
           >
             Login
@@ -141,73 +141,74 @@ const scrollToSection = (id) => {
       </nav>
 
       {/* Mobile Dropdown Menu */}
-     <div
-  className={`lg:hidden transition-all duration-300 ease-in-out ${
-    isOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0 overflow-hidden"
-  } bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700`}
->
-  <ul className="flex flex-col px-6 py-4 space-y-3 font-medium">
-
-    {/* Menu Links */}
-    <li>
-      <button
-        onClick={() => scrollToSection("home")}
-        className="block py-2 text-gray-800 dark:text-gray-200 hover:text-skin-base w-full text-left"
+      <div
+        className={`lg:hidden transition-all duration-300 ease-in-out ${isOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0 overflow-hidden"
+          } bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700`}
       >
-        Home
-      </button>
-    </li>
-    <li>
-      <button
-        onClick={() => scrollToSection("icon-features")}
-        className="block py-2 text-gray-800 dark:text-gray-200 hover:text-skin-base w-full text-left"
-      >
-        Features
-      </button>
-    </li>
-    <li>
-      <button
-        onClick={() => scrollToSection("simple-pricing")}
-        className="block py-2 text-gray-800 dark:text-gray-200 hover:text-skin-base w-full text-left"
-      >
-        Pricing
-      </button>
-    </li>
-    <li>
-      <button
-        onClick={() => scrollToSection("user-faqs")}
-        className="block py-2 text-gray-800 dark:text-gray-200 hover:text-skin-base w-full text-left"
-      >
-        FAQs
-      </button>
-    </li>
+        <ul className="flex flex-col px-6 py-4 space-y-3 font-medium">
 
-    {/* Divider */}
-    <li>
-      <hr className="border-gray-200 dark:border-gray-700 my-2" />
-    </li>
+          {/* Menu Links */}
+          <li>
+            <button
+              onClick={() => scrollToSection("home")}
+              className="block py-2 text-gray-800 dark:text-gray-200 hover:text-skin-base w-full text-left"
+            >
+              Home
+            </button>
+          </li>
+          <li>
+            <button
+              onClick={() => scrollToSection("icon-features")}
+              className="block py-2 text-gray-800 dark:text-gray-200 hover:text-skin-base w-full text-left"
+            >
+              Features
+            </button>
+          </li>
+          <li>
+            <button
+              onClick={() => scrollToSection("simple-pricing")}
+              className="block py-2 text-gray-800 dark:text-gray-200 hover:text-skin-base w-full text-left"
+            >
+              Pricing
+            </button>
+          </li>
+          <li>
+            <button
+              onClick={() => scrollToSection("user-faqs")}
+              className="block py-2 text-gray-800 dark:text-gray-200 hover:text-skin-base w-full text-left"
+            >
+              FAQs
+            </button>
+          </li>
 
-    {/* Theme Toggle + Login (clean horizontal row) */}
-    <li className="flex items-center justify-between">
-      
+          {/* Divider */}
+          <li>
+            <hr className="border-gray-200 dark:border-gray-700 my-2" />
+          </li>
 
-      <a
-        href="https://restoscan.com/login"
-        className="px-4 py-2 text-sm font-semibold border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"
-      >
-        Login
-      </a>
-    </li>
+          {/* Theme Toggle + Login (clean horizontal row) */}
+          <li className="flex items-center justify-between">
 
-    {/* Get Started Button */}
-    <li>
-      <GetStartedButton
-        text="Get Started"
-        onClick={() => (window.location.href = "/signup")}
-      />
-    </li>
-  </ul>
-</div>
+
+            <a
+              href="#"
+              onClick={() => (window.location.href = "/login")}
+
+              className="px-4 py-2 text-sm font-semibold border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"
+            >
+              Login
+            </a>
+          </li>
+
+          {/* Get Started Button */}
+          <li>
+            <GetStartedButton
+              text="Get Started"
+              onClick={() => (window.location.href = "/signup")}
+            />
+          </li>
+        </ul>
+      </div>
 
     </header>
   );
