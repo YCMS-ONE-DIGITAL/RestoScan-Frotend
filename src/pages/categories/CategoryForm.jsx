@@ -15,8 +15,13 @@ const CategoryForm = ({ category, onClose }) => {
 
   const mutation = useMutation({
     mutationFn: async (data) => {
-      if (category) return api.put(`/categories/${category.id}`, data);
-      else return api.post("/categories", data);
+      // 👉 Update category (POST route)
+      if (category) {
+        return api.post(`/restaurant/category/update/${category.id}`, data);
+      }
+
+      // 👉 Add category
+      return api.post("/restaurant/category/add", data);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["categories"] });

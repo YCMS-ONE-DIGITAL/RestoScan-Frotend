@@ -1,47 +1,79 @@
 import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
+import api from "@/api/api";
 
-export default function AddEditTableModal({ isOpen, onClose, onSave, editTable }) {
+export default function AddEditTableModal({ isOpen, onClose, onSave, editTable, restaurantId }) {
   const [tableData, setTableData] = useState({
     number: "",
     capacity: "",
-    location: "",
+    // location: "",
     status: "Available",
   });
 
   const [errors, setErrors] = useState({});
 
-  // ✅ If editing table, pre-fill values
+  // ⭐ Pre-fill when editing
   useEffect(() => {
     if (editTable) {
-      setTableData(editTable);
+      setTableData({
+        number: editTable.table_no,
+        capacity: editTable.seating_number,
+        // location: editTable.location ?? "",
+        status: "Available",
+      });
     } else {
-      setTableData({ number: "", capacity: "", location: "", status: "Available" });
+      setTableData({ number: "", capacity: "", 
+        // location: "", 
+        status: "Available" });
     }
   }, [editTable]);
 
-  // ✅ Common Input Handler
+  // ⭐ Input handler
   const handleChange = (e) => {
     setTableData({ ...tableData, [e.target.name]: e.target.value });
   };
 
-  // ✅ Form Validation
+  // ⭐ Validation
   const validateForm = () => {
     const newErrors = {};
-    if (!tableData.number.trim()) newErrors.number = "Table Number is required";
-    if (!tableData.capacity) newErrors.capacity = "Capacity is required";
-    if (tableData.capacity < 1) newErrors.capacity = "Minimum 1 seat required";
-    if (!tableData.location.trim()) newErrors.location = "Location is required";
+    if (!tableData.number.trim()) newErrors.number = "Table Number required";
+    if (!tableData.capacity) newErrors.capacity = "Capacity required";
+    if (tableData.capacity < 1) newErrors.capacity = "Minimum 1 seat";
+    // if (!tableData.location.trim()) newErrors.location = "Location required";
     return newErrors;
   };
 
-  const handleSubmit = () => {
+  // ⭐ Backend Submit
+  const handleSubmit = async () => {
     const validationErrors = validateForm();
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       return;
     }
-    onSave(tableData);
+
+    try {
+      if (editTable) {
+        // ➤ UPDATE
+        await api.post("/restaurant/table/update", {
+          table_id: editTable.id,
+          table_no: tableData.number,
+          seating_number: tableData.capacity,
+        });
+      } else {
+        // ➤ ADD
+        await api.post("/restaurant/table/add", {
+          restaurant_id: restaurantId,
+          table_no: tableData.number,
+          seating_number: tableData.capacity,
+        });
+      }
+
+      onSave(); // refresh list
+      onClose();
+
+    } catch (err) {
+      console.log("Error:", err);
+    }
   };
 
   if (!isOpen) return null;
@@ -49,7 +81,7 @@ export default function AddEditTableModal({ isOpen, onClose, onSave, editTable }
   return (
     <div className="fixed inset-0 flex justify-center items-center bg-black/50 z-50">
       <div className="bg-white rounded-xl p-6 w-full max-w-sm relative">
-        {/* Close Button */}
+
         <button onClick={onClose} className="absolute top-3 right-3 text-gray-600">
           <X className="w-5 h-5" />
         </button>
@@ -58,20 +90,18 @@ export default function AddEditTableModal({ isOpen, onClose, onSave, editTable }
           {editTable ? "Edit Table" : "Add New Table"}
         </h2>
 
-        {/* ✅ Table Number */}
         <div className="mb-3">
           <input
-  type="text"
-  name="number"
-  placeholder="Table Number"
-  value={tableData.number}
-  onChange={handleChange}
-  className="w-full border px-3 py-2 rounded mb-3 text-gray-900 bg-white"
-/>
+            type="text"
+            name="number"
+            placeholder="Table Number"
+            value={tableData.number}
+            onChange={handleChange}
+            className="w-full border px-3 py-2 rounded mb-3 text-gray-900 bg-white"
+          />
           {errors.number && <p className="text-red-500 text-sm">{errors.number}</p>}
         </div>
 
-        {/* ✅ Capacity */}
         <div className="mb-3">
           <input
             type="number"
@@ -83,35 +113,19 @@ export default function AddEditTableModal({ isOpen, onClose, onSave, editTable }
           />
           {errors.capacity && <p className="text-red-500 text-sm">{errors.capacity}</p>}
         </div>
-
-        {/* ✅ Location */}
+{/* 
         <div className="mb-3">
           <input
             type="text"
             name="location"
-            placeholder="Location (e.g. Window Side)"
+            placeholder="Location"
             value={tableData.location}
             onChange={handleChange}
             className="w-full border px-3 py-2 rounded mb-3 text-gray-900 bg-white"
           />
           {errors.location && <p className="text-red-500 text-sm">{errors.location}</p>}
-        </div>
+        </div> */}
 
-        {/* ✅ Status Dropdown */}
-        <div className="mb-4">
-          <select
-            name="status"
-            value={tableData.status}
-            onChange={handleChange}
-            className="w-full border px-3 py-2 rounded mb-3 text-gray-900 bg-white"
-          >
-            <option value="Available">Available</option>
-            <option value="Occupied">Occupied</option>
-            <option value="Reserved">Reserved</option>
-          </select>
-        </div>
-
-        {/* ✅ Save Button */}
         <button
           className="bg-green-600 text-white w-full py-2 rounded font-semibold"
           onClick={handleSubmit}

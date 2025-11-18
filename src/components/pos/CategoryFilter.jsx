@@ -1,26 +1,33 @@
-import { categories } from "./data";
+import { useQuery } from "@tanstack/react-query";
+import api from "@/api/api";
 
-const CategoryFilter = ({ setFilterCat }) => {
+export default function CategoryFilter({ setFilterCat }) {
+  const { data: categories = [] } = useQuery({
+    queryKey: ["pos-categories"],
+    queryFn: async () => {
+      const res = await api.get("/restaurant/categories");
+      return res.data.data ?? [];
+    },
+  });
+
   return (
-    <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mt-4">
+    <div className="flex gap-2 overflow-x-auto p-2">
       <button
+        className="bg-gray-700 text-white px-3 py-1 rounded"
         onClick={() => setFilterCat(null)}
-        className="p-2 bg-gray-800 dark:bg-gray-800 shadow rounded-md text-sm font-medium hover:bg-gray-700 dark:hover:bg-gray-700 text-center"
       >
-        Show All
+        All
       </button>
 
       {categories.map((cat) => (
         <button
           key={cat.id}
+          className="bg-gray-700 text-white px-3 py-1 rounded"
           onClick={() => setFilterCat(cat.id)}
-          className="p-2 bg-gray-800 dark:bg-gray-800 shadow rounded-md text-sm hover:bg-gray-700 dark:hover:bg-gray-700"
         >
           {cat.name}
         </button>
       ))}
     </div>
   );
-};
-
-export default CategoryFilter;
+}

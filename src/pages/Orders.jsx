@@ -1,70 +1,83 @@
 import React, { useState } from "react";
 import OrderSidePanel from "../components/pos/OrderSidePanel";
 import OrderCard from "../components/DashboardComponents/OrderCard";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import api from "@/api/api";
 
 const Orders = () => {
-  const [orders, setOrders] = useState([
-    {
-      id: 7,
-      orderNo: 7,
-      table: "T01",
-      status: "KOT",
-      statusText: "Cooking Now",
-      items: [
-        { id: 1, name: "Margherita Pizza", qty: 1, price: 200 },
-        { id: 2, name: "Coke", qty: 2, price: 40 }
-      ],
-      total: 280,
-      pax: 2,
-      orderType: "dine_in",
-      time: "November 07, 2025 13:27 PM"
-    }
-  ]);
+  const qc = useQueryClient();
 
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [openPanel, setOpenPanel] = useState(false);
 
-  // ✅ When card clicked → open panel with that order
+  // ✅ Fetch all orders of logged in restaurant
+  const { data: orders = [], isLoading } = useQuery({
+    queryKey: ["orders"],
+    queryFn: async () => {
+      const res = await api.get("/orders?restaurant_id=3"); // ⭐ restaurant_id from auth
+      return res.data.data;
+    },
+  });
+
+  // ✅ Update order mutation
+  const updateOrder = useMutation({
+    mutationFn: async (payload) => {
+      return api.post("/order/update", payload);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries(["orders"]);
+      setOpenPanel(false);
+    },
+  });
+
+  // 👉 When card clicked → open panel
   const handleCardClick = (order) => {
     setSelectedOrder(order);
     setOpenPanel(true);
   };
 
-  // ✅ Save updated order back to list
+  // 👉 Save from panel → call update API
   const handleSaveOrder = (mode, updatedOrder) => {
-    console.log("SAVE ORDER:", mode, updatedOrder);
-
-    setOrders(prev =>
-      prev.map(o => (o.id === updatedOrder.id ? updatedOrder : o))
-    );
-    setOpenPanel(false);
+    updateOrder.mutate({
+      order_id: updatedOrder.id,
+      status: updatedOrder.status,
+      payment_status: updatedOrder.payment_status,
+      payment_method: updatedOrder.payment_method,
+    });
   };
 
   return (
-    <div className="p-4  dark:bg-gray-800 relative">
-      <h1 className="text-xl font-semibold dark:text-white">Orders ({orders.length})</h1>
+    <div className="p-4 dark:bg-gray-800 relative">
+      <h1 className="text-xl font-semibold dark:text-white">
+        Orders ({orders.length})
+      </h1>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
-        {orders.map((order) => (
-          <div
-            key={order.id}
-            className="cursor-pointer"
-            onClick={() => handleCardClick(order)}
-          >
-            <OrderCard
-              table={order.table}
-              orderNo={order.orderNo}
-              status={order.status}
-              statusText={order.statusText}
-              time={order.time}
-              items={`${order.items.length} Item(s)`}
-              total={`₹${order.total}`}
-            />
-          </div>
-        ))}
-      </div>
+      {/* Loading State */}
+      {isLoading ? (
+        <p className="mt-4 text-gray-400">Loading orders...</p>
+      ) : (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+          {orders.map((order) => (
+            <div
+              key={order.id}
+              className="cursor-pointer"
+              onClick={() => handleCardClick(order)}
+            >
+              <OrderCard
+                table={order.table?.name || "Table"}
+                orderNo={order.id}
+                status={order.status}
+                statusText={order.status}
+                time={order.created_at}
+                items={`${order.items?.length || 0} Item(s)`}
+                total={`₹${order.total_amount}`}
+              />
+            </div>
+          ))}
+        </div>
+      )}
 
-      {/* ✅ Side Panel */}
+      {/* 👉 Side Panel */}
       <OrderSidePanel
         open={openPanel}
         onClose={() => setOpenPanel(false)}

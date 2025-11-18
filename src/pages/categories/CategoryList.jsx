@@ -10,18 +10,18 @@ const CategoryList = () => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
 
-  // ✅ Fetch categories
+  // ✅ Fetch categories (Laravel route)
   const { data: categories = [], isLoading, error } = useQuery({
     queryKey: ["categories"],
     queryFn: async () => {
-      const res = await api.get("/categories");
+      const res = await api.get("/restaurant/categories");
       return res.data;
     },
   });
 
-  // ✅ Delete category
+  // ✅ Delete category (Laravel route)
   const deleteMutation = useMutation({
-    mutationFn: (id) => api.delete(`/categories/${id}`),
+    mutationFn: (id) => api.delete(`/restaurant/categories/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["categories"] }),
   });
 
@@ -50,6 +50,7 @@ const CategoryList = () => {
               >
                 Edit
               </Button>
+
               <Button
                 variant="destructive"
                 onClick={() => deleteMutation.mutate(cat.id)}
@@ -61,6 +62,7 @@ const CategoryList = () => {
         ))}
       </div>
 
+      {/* Category Form */}
       {isFormOpen && (
         <CategoryForm
           category={selectedCategory}

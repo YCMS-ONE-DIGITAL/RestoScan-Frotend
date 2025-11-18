@@ -1,85 +1,120 @@
-import React, { useState } from "react";
-import CartTable from "./CartTable";
+import { useMutation } from "@tanstack/react-query";
+import api from "@/api/api";
+import { Button } from "@/components/ui/button";
 
-const CartSection = ({ cartItems, setCartItems }) => {
-  const [orderType, setOrderType] = useState("dine_in");
-  const [noOfPax, setNoOfPax] = useState(1);
+export default function CartSection({ cartItems, setCartItems, selectedTable }) {
+  const placeOrderMutation = useMutation({
+    mutationFn: async (payload) => {
+      return api.post("/restaurant/orders/create", payload);
+    },
+    onSuccess: (res) => {
+      alert("Order Created! Order ID: " + res.data.order.id);
+      setCartItems([]);
+    },
+    onError: (err) => alert("Order failed"),
+  });
 
-  // Calculate totals
-  const totalItems = cartItems.reduce((acc, item) => acc + item.qty, 0);
-  const subTotal = cartItems.reduce((acc, item) => acc + item.price * item.qty, 0);
+  const handlePlaceOrder = () => {
+    if (!selectedTable) {
+      return alert("Please select a table first!");
+    }
 
-  return (
-    <div className="bg-gray-800 w-1/2  flex-grow p-4 ">
+    if (cartItems.length === 0) {
+      return alert("Cart is empty!");
+    }
 
-      {/* ✅ Order Type Selection */}
-      <div className="flex justify-between bg-gray-800 mb-3">
-        <div className="flex gap-4">
-          {["dine_in", "delivery", "pickup"].map((type) => (
-            <label key={type} className="flex items-center cursor-pointer">
-              <input
-                type="radio"
-                className="mr-2"
-                checked={orderType === type}
-                onChange={() => setOrderType(type)}
-              />
-              <span className="text-gray-300 capitalize">
-                {type.replace("_", " ")}
-              </span>
-            </label>
-          ))}
-        </div>
-      </div>
+    const payload = {
+      table_id: selectedTable,
+      items: cartItems.map((i) => ({
+        menu_item_id: i.id,
+        quantity: i.quantity,
+      })),
+    };
 
-      {/* ✅ Conditional: Show "Assign Table" if Dine In, else show Pax Input */}
-      <div className="flex justify-between bg-gray-800 items-center mb-4">
-        {orderType === "dine_in" ? (
-          <button
-            className="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-sm rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
-            onClick={() => console.log("Assign Table Modal Open")}
-          >
-            Assign Table
-          </button>
-        ) : (
-          <div className="flex items-center text-sm text-gray-300">
-            Pax:
-            <input
-              type="number"
-              min="1"
-              value={noOfPax}
-              onChange={(e) => setNoOfPax(e.target.value)}
-              className="ml-2 w-16 px-2 py-1 border rounded bg-gray-800 dark:bg-gray-700 dark:text-white"
-            />
-          </div>
-        )}
-      </div>
-
-      {/* ✅ Cart Items Table */}
-      <CartTable cartItems={cartItems} setCartItems={setCartItems} />
-
-      {/* ✅ Summary Section */}
-      <div className="mt-4 bg-gray-800 dark:bg-gray-700 rounded p-4 space-y-2">
-        <div className="flex justify-between text-gray-300">
-          <span>Items</span>
-          <span>{totalItems}</span>
-        </div>
-        <div className="flex justify-between text-gray-300">
-          <span>Subtotal</span>
-          <span>₹{subTotal}</span>
-        </div>
-        <div className="flex justify-between font-semibold text-gray-200">
-          <span>Total</span>
-          <span>₹{subTotal}</span>
-        </div>
-      </div>
-
-      {/* ✅ KOT & BILL Buttons */}
-      <div className="mt-4 flex gap-2">
-        <button className="w-full bg-gray-700 text-white py-2 rounded">KOT</button>
-        <button className="w-full bg-green-600 text-white py-2 rounded">BILL</button>
-      </div>
-    </div>
-  );
+    placeOrderMutation.mutate(payload);
+  };
+// increase qty
+const increaseQty = (id) => {
+  setCartItems(cartItems.map(item =>
+    item.id === id
+      ? { ...item, qty: Number(item.qty) + 1 }
+      : item
+  ));
 };
 
-export default CartSection;
+// decrease qty (never below 1)
+const decreaseQty = (id) => {
+  setCartItems(cartItems.map(item =>
+    item.id === id
+      ? { ...item, qty: Math.max(1, Number(item.qty) - 1) }
+      : item
+  ));
+};
+
+// remove item
+const removeItem = (id) => {
+  setCartItems(cartItems.filter(item => item.id !== id));
+};
+
+// total
+const total = cartItems.reduce(
+  (sum, item) => sum + Number(item.price) * Number(item.qty),
+  0
+);
+
+
+  return (
+    <div className="w-full lg:w-1/3 bg-gray-800 p-4 text-white">
+      <h2 className="text-xl font-bold mb-4">Cart</h2>
+
+      {cartItems.map((item) => (
+  <div key={item.id} className="flex justify-between items-center p-3 bg-gray-800 rounded mb-2">
+    <div>
+      <p className="text-white text-sm">{item.name}</p>
+      <p className="text-gray-400 text-xs">₹{item.price}</p>
+    </div>
+
+    <div className="flex items-center gap-2">
+      <button
+        onClick={() => decreaseQty(item.id)}
+        className="bg-gray-700 text-white px-2 rounded"
+      >
+        -
+      </button>
+
+      <span className="text-white w-6 text-center">
+        {Number(item.qty)}
+      </span>
+
+      <button
+        onClick={() => increaseQty(item.id)}
+        className="bg-gray-700 text-white px-2 rounded"
+      >
+        +
+      </button>
+    </div>
+
+    <button
+      onClick={() => removeItem(item.id)}
+      className="text-red-400 text-sm"
+    >
+      ✕
+    </button>
+  </div>
+))}
+
+
+      <hr className="my-3" />
+
+      <p className="font-semibold text-lg mb-3">Total: ₹{total}</p>
+
+      <Button
+        className="w-full bg-green-600"
+        onClick={handlePlaceOrder}
+        disabled={placeOrderMutation.isPending}
+      >
+        {placeOrderMutation.isPending ? "Placing..." : "Place Order"}
+      </Button>
+    </div>
+  );
+}

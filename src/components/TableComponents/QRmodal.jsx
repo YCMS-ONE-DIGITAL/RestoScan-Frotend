@@ -5,8 +5,8 @@ import { X } from "lucide-react";
 export default function QRModal({ isOpen, onClose, table }) {
   if (!isOpen || !table) return null;
 
-const qrURL = `http://localhost:5173/customerwebsite?table=${table.number}`;
-
+const qrURL = `http://localhost:5173/customerwebsite?table=${table.table_no}`;
+  // console.log(table.table_no)
   // ✅ Download Function
   const downloadQR = () => {
     const canvas = document.getElementById("qr-code");

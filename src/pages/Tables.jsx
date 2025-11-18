@@ -4,44 +4,43 @@ import {
   Card, CardHeader, CardTitle, CardContent, CardFooter,
 } from "@/components/ui/card";
 import AddEditTableModal from "../components/TableComponents/AddTableModal";
-import QRModal from "../components/TableComponents/QRmodal"; // ✅ QR Modal Import
+import QRModal from "../components/TableComponents/QRmodal";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import api from "@/api/api";
 
 export default function TableList() {
-  const [tables, setTables] = useState([
-    { id: 1, number: "T01", status: "Available", capacity: 4, location: "Window" },
-    { id: 2, number: "T02", status: "Occupied", capacity: 2, location: "Entrance" },
-  ]);
+  const qc = useQueryClient();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editTable, setEditTable] = useState(null);
-
-  // ✅ QR Code State
   const [selectedTableForQR, setSelectedTableForQR] = useState(null);
 
-  // Save Handler
-  const handleSaveTable = (tableData) => {
-    if (editTable) {
-      setTables(tables.map((t) => (t.id === tableData.id ? tableData : t)));
-    } else {
-      setTables([...tables, { ...tableData, id: Date.now() }]);
-    }
-    setIsModalOpen(false);
-    setEditTable(null);
-  };
+  // ⭐ get restaurant id
+  const { data: restaurant } = useQuery({
+    queryKey: ["restaurant"],
+    queryFn: async () => {
+      const res = await api.get("/restaurant");
+      return res.data.restaurant;
+    },
+  });
 
-  // Delete
-  const handleDelete = (id) => {
-    setTables(tables.filter((t) => t.id !== id));
-  };
+  // ⭐ fetch tables
+  const { data: tables = [], isLoading } = useQuery({
+    queryKey: ["tables"],
+    queryFn: async () => {
+      const res = await api.get(
+        `/restaurant/table/list?restaurant_id=${restaurant.id}`
+      );
+      return res.data.data;
+    },
+    enabled: !!restaurant,
+  });
 
-  // Status Change
-  const changeStatus = (id) => {
-    setTables(tables.map((t) =>
-      t.id === id
-        ? { ...t, status: t.status === "Available" ? "Occupied" : t.status === "Occupied" ? "Reserved" : "Available" }
-        : t
-    ));
-  };
+  // ⭐ delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: (id) => api.delete(`/restaurant/table/delete/${id}`),
+    onSuccess: () => qc.invalidateQueries(["tables"]),
+  });
 
   return (
     <div className="p-6">
@@ -50,50 +49,68 @@ export default function TableList() {
         <Button className="bg-green-600" onClick={() => setIsModalOpen(true)}>+ Add Table</Button>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mt-4">
-        {tables.map((table) => (
-          <Card key={table.id} className="bg-gray-800 text-white">
-            <CardHeader className="flex justify-between">
-              <CardTitle>Table {table.number}</CardTitle>
-              <span
-                onClick={() => changeStatus(table.id)}
-                className={`px-2 py-1 text-xs rounded-full cursor-pointer ${
-                  table.status === "Available" ? "bg-green-500/20 text-green-400" :
-                  table.status === "Occupied" ? "bg-yellow-500/20 text-yellow-400" :
-                  "bg-red-500/20 text-red-400"
-                }`}
-              >
-                {table.status}
-              </span>
-            </CardHeader>
+      {isLoading ? (
+        <p className="text-white mt-4">Loading...</p>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mt-4">
+          {tables.map((table) => (
+            <Card key={table.id} className="bg-gray-800 text-white">
+              <CardHeader className="flex justify-between">
+                <CardTitle>Table {table.table_no}</CardTitle>
+                <span className="px-2 py-1 text-xs rounded-full bg-green-500/20 text-green-400">
+                  Available
+                </span>
+              </CardHeader>
 
-            <CardContent>
-              <p className="text-sm">Seats: {table.capacity}</p>
-              <p className="text-sm">Location: {table.location}</p>
-            </CardContent>
+              <CardContent>
+                <p className="text-sm">Seats: {table.seating_number}</p>
+                {/* <p className="text-sm">Location: {table.location ?? "N/A"}</p> */}
+              </CardContent>
 
-            <CardFooter className="flex gap-2 justify-between">
-              <Button size="sm" variant="outline" className="text-black" onClick={() => { setEditTable(table); setIsModalOpen(true); }}>Edit</Button>
-              <Button size="sm" variant="destructive" onClick={() => handleDelete(table.id)}>Delete</Button>
-              <Button size="sm" className="bg-blue-600" onClick={() => setSelectedTableForQR(table)}>
-                QR Code
-              </Button>
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
+              <CardFooter className="flex gap-2 justify-between">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-black"
+                  onClick={() => {
+                    setEditTable(table);
+                    setIsModalOpen(true);
+                  }}
+                >
+                  Edit
+                </Button>
 
-      {/* ✅ Add/Edit Modal */}
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={() => deleteMutation.mutate(table.id)}
+                >
+                  Delete
+                </Button>
+
+                <Button
+                  size="sm"
+                  className="bg-blue-600"
+                  onClick={() => setSelectedTableForQR(table)}
+                >
+                  QR Code
+                </Button>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      )}
+
       {isModalOpen && (
         <AddEditTableModal
           isOpen={isModalOpen}
           onClose={() => { setIsModalOpen(false); setEditTable(null); }}
-          onSave={handleSaveTable}
+          onSave={() => qc.invalidateQueries(["tables"])}
           editTable={editTable}
+          restaurantId={restaurant.id}
         />
       )}
 
-      {/* ✅ QR Modal */}
       <QRModal
         isOpen={!!selectedTableForQR}
         onClose={() => setSelectedTableForQR(null)}
