@@ -3,12 +3,45 @@ import MenuSearchBar from "../components/pos/MenuSearchBar";
 import CategoryFilter from "../components/pos/CategoryFilter";
 import MenuGrid from "../components/pos/MenuGrid";
 import OrderSidePanel from "../components/pos/OrderSidePanel";
+import { useQuery } from "@tanstack/react-query";
+import api from "@/api/api";
 
 const POS = () => {
   const [search, setSearch] = useState("");
   const [filterCat, setFilterCat] = useState(null);
   const [cartItems, setCartItems] = useState([]);
-  const [selectedTable, setSelectedTable] = useState("");
+
+  const [selectedTable, setSelectedTable] = useState("");       // table ID
+  const [selectedTableNumber, setSelectedTableNumber] = useState(""); // table_no
+
+  // ⭐ Get restaurant (auth)
+  const { data: restaurant } = useQuery({
+    queryKey: ["restaurant"],
+    queryFn: async () => {
+      const res = await api.get("/restaurant");
+      return res.data.restaurant;
+    },
+  });
+
+  // ⭐ Fetch tables
+  const { data: tables = [] } = useQuery({
+    queryKey: ["tables"],
+    queryFn: async () => {
+      const res = await api.get(
+        `/restaurant/table/list?restaurant_id=${restaurant.id}`
+      );
+      return res.data.data ?? [];
+    },
+    enabled: !!restaurant,
+  });
+
+  // ⭐ When selecting a table
+  const handleSelectTable = (tableId) => {
+    setSelectedTable(tableId);
+
+    const tbl = tables.find((t) => t.id == tableId);
+    setSelectedTableNumber(tbl?.table_no || "");
+  };
 
   return (
     <div className="flex dark:bg-gray-900 min-h-screen">
@@ -18,16 +51,19 @@ const POS = () => {
         <div className="flex justify-between items-center mb-3">
           <MenuSearchBar search={search} setSearch={setSearch} />
 
-          {/* Table Selector */}
+          {/* ⭐ DYNAMIC TABLE DROPDOWN */}
           <select
             className="bg-gray-800 text-white px-3 py-2 rounded"
             value={selectedTable}
-            onChange={(e) => setSelectedTable(e.target.value)}
+            onChange={(e) => handleSelectTable(e.target.value)}
           >
             <option value="">Select Table</option>
-            <option value="1">Table 1</option>
-            <option value="2">Table 2</option>
-            <option value="3">Table 3</option>
+
+            {tables.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.table_no} — {t.seating_number} Seats
+              </option>
+            ))}
           </select>
         </div>
 
@@ -41,17 +77,17 @@ const POS = () => {
         />
       </div>
 
-      {/* RIGHT FIXED PANEL ALWAYS OPEN */}
+      {/* RIGHT FIXED SIDE PANEL */}
       <div className="w-[380px] border-l border-gray-700">
         <OrderSidePanel
           order={{
             items: cartItems,
             table_id: selectedTable,
+            table_no: selectedTableNumber,   // ⭐ VERY IMPORTANT
             orderNo: "New",
           }}
         />
       </div>
-
     </div>
   );
 };

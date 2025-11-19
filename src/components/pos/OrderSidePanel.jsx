@@ -6,16 +6,17 @@ export default function OrderSidePanel({ order }) {
   const [orderData, setOrderData] = useState({
     items: [],
     table_id: null,
-    orderNo: "",
+    table_no:null,
   });
 
   // Load order whenever cart changes
   useEffect(() => {
     if (order) {
+      console.log(order);
       setOrderData({
         items: order.items || [],
-        table_id: order.table_id,
-        orderNo: order.orderNo,
+        table_id: order.table_id || null,
+        table_no: order.table_no || null,
       });
     }
   }, [order]);
@@ -42,24 +43,57 @@ export default function OrderSidePanel({ order }) {
       items: prev.items.map((it) =>
         it.id === id
           ? {
-            ...it,
-            qty:
-              type === "inc"
-                ? Number(it.qty) + 1
-                : Number(it.qty) > 1
+              ...it,
+              qty:
+                type === "inc"
+                  ? Number(it.qty) + 1
+                  : Number(it.qty) > 1
                   ? Number(it.qty) - 1
                   : 1,
-          }
+            }
           : it
       ),
     }));
   };
 
+  // Remove item
   const removeItem = (id) => {
     setOrderData((prev) => ({
       ...prev,
       items: prev.items.filter((i) => i.id !== id),
     }));
+  };
+
+  // ⭐ CREATE ORDER API CALL
+  const createOrder = async () => {
+    if (!orderData.table_id) {
+      alert("Please select a table");
+      return;
+    }
+
+    if (orderData.items.length === 0) {
+      alert("No items added!");
+      return;
+    }
+
+    try {
+      const payload = {
+        table_id: Number(orderData.table_id),
+        items: orderData.items.map((i) => ({
+          menu_item_id: i.id,
+          quantity: Number(i.qty),
+        })),
+      };
+
+      const res = await api.post("/restaurant/orders/create", payload);
+
+      alert("Order created successfully!");
+      console.log("ORDER RESPONSE:", res.data);
+
+    } catch (err) {
+      console.error(err);
+      alert("Order creation failed");
+    }
   };
 
   return (
@@ -68,12 +102,12 @@ export default function OrderSidePanel({ order }) {
       {/* HEADER */}
       <div className="p-4 border-b border-gray-700">
         <h2 className="text-lg font-semibold">
-          Table: {orderData.table_id || "Select Table"}
+          Table: {orderData.table_no || "Select Table"}
         </h2>
       </div>
 
       {/* ITEMS */}
-      <div className=" p-4">
+      <div className="p-4 flex overflow-auto">
         <table className="w-full text-sm">
           <thead className="bg-gray-700">
             <tr>
@@ -81,6 +115,7 @@ export default function OrderSidePanel({ order }) {
               <th className="p-2 text-center">Qty</th>
               <th className="p-2 text-right">Price</th>
               <th className="p-2 text-right">Total</th>
+              <th></th>
             </tr>
           </thead>
 
@@ -92,24 +127,26 @@ export default function OrderSidePanel({ order }) {
 
                   <td className="p-2 text-center">
                     <button onClick={() => updateQty(it.id, "dec")}>-</button>
-                    <span className="px-2 ">{it.qty}</span>
+                    <span className="px-2">{it.qty}</span>
                     <button onClick={() => updateQty(it.id, "inc")}>+</button>
                   </td>
 
                   <td className="p-2 text-right">₹{it.price}</td>
-                  <td className="p-2 text-right">₹{it.price * it.qty}</td>
-                  <button
-                    onClick={() => removeItem(it.id)}
-                    className="text-red-500 text-xs"
-                  >
-                    Remove
-                  </button>
+                  <td className="p-2 text-right">₹{it.qty * it.price}</td>
 
+                  <td className="p-2 text-right">
+                    <button
+                      onClick={() => removeItem(it.id)}
+                      className="text-red-500 text-xs"
+                    >
+                      Remove
+                    </button>
+                  </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td className="p-4 text-center text-gray-400" colSpan="4">
+                <td className="p-4 text-center text-gray-400" colSpan="5">
                   No Items Added
                 </td>
               </tr>
@@ -124,6 +161,7 @@ export default function OrderSidePanel({ order }) {
           <span>Items</span>
           <span>{totals.count}</span>
         </div>
+
         <div className="flex justify-between">
           <span>Total</span>
           <span>₹{totals.total}</span>
@@ -131,11 +169,12 @@ export default function OrderSidePanel({ order }) {
 
         <button
           className="w-full bg-green-600 mt-4 py-2 rounded"
-          onClick={() => alert("Create Order API will be called")}
+          onClick={createOrder}
         >
           CREATE ORDER
         </button>
       </div>
+
     </aside>
   );
 }
