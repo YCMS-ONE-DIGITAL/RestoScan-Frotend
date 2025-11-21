@@ -1,75 +1,103 @@
 import React from "react";
+import { Clock, IndianRupee, Package } from "lucide-react";
 
 export default function OrderCard({
-  table ,
+  table,
   orderNo,
-  status,  // "Paid" | "KOT" | "Pending"
+  status, // "Paid" | "KOT" | "Pending"
   statusText,
-  time ,items,
+  time,
+  items,
   total,
   onClick,
 }) {
-  // Status Badge Colors
-  const statusStyles = {
-    Paid: "bg-green-100 text-green-800 dark:bg-green-700 dark:text-green-300 border border-green-400",
-    KOT: "bg-yellow-100 text-yellow-800 dark:bg-yellow-700 dark:text-yellow-300 border border-yellow-400",
-    Pending: "bg-red-100 text-red-800 dark:bg-red-700 dark:text-red-300 border border-red-400",
+  // Modern Status Badges (Zomato/Swiggy style)
+  const statusConfig = {
+    Paid: {
+      bg: "bg-green-500/15",
+      text: "text-green-400",
+      border: "border-green-500/30",
+      dot: "text-green-400",
+      ring: "ring-green-500/20",
+    },
+    KOT: {
+      bg: "bg-yellow-500/15",
+      text: "text-yellow-400",
+      border: "border-yellow-500/30",
+      dot: "text-yellow-400",
+      ring: "ring-yellow-500/20",
+    },
+    Pending: {
+      bg: "bg-red-500/15",
+      text: "text-red-400",
+      border: "border-red-500/30",
+      dot: "text-red-400",
+      ring: "ring-red-500/20",
+    },
   };
 
-  // Status Dot Color
-  const dotColor = {
-    Paid: "text-green-500",
-    KOT: "text-yellow-400",
-    Pending: "text-red-500",
-  };
+  const config = statusConfig[status] || statusConfig.Pending;
 
   return (
-    <a
+    <div
       onClick={onClick}
-      className="group flex flex-col gap-3 items-center border bg-gray-800 shadow-sm rounded-lg hover:shadow-md transition dark:bg-gray-700 dark:border-gray-600 p-3 cursor-pointer w-full"
+      className="group relative overflow-hidden bg-gray-800 border border-gray-700 rounded-xl p-5 cursor-pointer transition-all duration-300 hover:shadow-2xl hover:border-gray-600 hover:bg-gray-750"
     >
-      {/* Top Section */}
-      <div className="flex gap-4 justify-between w-full">
-        {/* Table */}
-        <div className="flex gap-3">
-          <div className="p-3 rounded-lg bg-gray-600 text-white inline-flex items-center">
-            <h3 className="font-semibold">{table}</h3>
+      {/* Optional: Glow ring on hover */}
+      <div className={`absolute inset-0 ring-4 ring-transparent group-hover:ring-inset ${config.ring} transition-all duration-500`} />
+
+      {/* Header: Table + Order No + Status */}
+      <div className="flex justify-between items-start mb-4">
+        <div className="flex items-center gap-4">
+          {/* Table Badge */}
+          <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl shadow-lg">
+            <span className="text-white font-bold text-lg">{table}</span>
           </div>
+
           <div>
-            <div className="font-medium text-gray-300 text-sm">
-              Order #{orderNo}
-            </div>
+            <h3 className="text-white font-semibold text-lg">Order #{orderNo}</h3>
+            <p className="text-gray-400 text-xs flex items-center gap-1.5 mt-1">
+              <Clock className="w-3.5 h-3.5" />
+              {time}
+            </p>
           </div>
         </div>
 
-        {/* Status Section */}
-        <div className="text-right flex flex-col">
-          {/* Status Box - FIX ✅ */}
-          <span className={`text-xs font-medium px-3 py-1 rounded uppercase tracking-wide whitespace-nowrap ${statusStyles[status]}`}>
+        {/* Status Badge */}
+        <div className="text-right">
+          <span
+            className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider border ${config.bg} ${config.text} ${config.border}`}
+          >
+            <span className={`w-2 h-2 rounded-full ${config.dot} animate-pulse`} />
             {status}
           </span>
-
-          {/* Status Text Below */}
-          <div className="text-xs text-gray-400 mt-1 inline-flex gap-1 items-center">
-            <svg width="8" height="8" className={dotColor[status]} viewBox="0 0 16 16">
-              <circle cx="8" cy="8" r="8" />
-            </svg>
-            {statusText}
-          </div>
+          {statusText && (
+            <p className="text-xs text-gray-400 mt-1.5">{statusText}</p>
+          )}
         </div>
       </div>
 
-      {/* Time and Items */}
-      <div className="flex w-full justify-between items-center text-xs text-gray-400">
-        <span>{time}</span>
+      {/* Items */}
+      <div className="flex items-center gap-2 text-gray-300 mb-4">
+        <Package className="w-4 h-4 text-gray-500" />
         <span className="text-sm font-medium">{items}</span>
       </div>
 
-      {/* Footer – Total */}
-      <div className="flex w-full justify-between items-center border-t pt-3">
-        <span className="text-sm font-medium text-gray-300">Total</span>
-        <span className="text-lg font-medium text-white">{total}</span>
+      {/* Footer: Total */}
+      <div className="flex justify-between items-center pt-4 border-t border-gray-700">
+        <span className="text-gray-400 text-sm font-medium">Total Amount</span>
+        <div className="flex items-center">
+          <IndianRupee className="w-5 h-5 text-green-400" />
+          <span className="text-2xl font-bold text-white ml-1">{total}</span>
+        </div>
       </div>
-    </a>
+
+      {/* Optional: Hover Arrow */}
+      <div className="absolute top-1/2 -right-2 -translate-y-1/2 opacity-0 group-hover:opacity-100 group-hover:right-4 transition-all duration-300">
+        <svg className="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+        </svg>
+      </div>
+    </div>
   );
 }

@@ -5,17 +5,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import MenuItemsForm from "./MenuItemForm";
 
-// IMAGE URL FIXER — always correct path returns
+
 const getImageUrl = (path) => {
   if (!path) return null;
 
-  // Full URL असेल तर direct वापरा
   if (path.startsWith("http")) return path;
 
-  // स्थानिक API base URL
   const base = "http://localhost:8000";
 
-  // सुरूवातीचा slash नसल्यास जोड
+  
   if (!path.startsWith("/")) {
     path = "/" + path;
   }

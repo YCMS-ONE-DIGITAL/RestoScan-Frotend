@@ -14,6 +14,18 @@ const POS = () => {
   const [selectedTable, setSelectedTable] = useState("");       // table ID
   const [selectedTableNumber, setSelectedTableNumber] = useState(""); // table_no
 
+
+  
+const getImageUrl = (path) => {
+  if (!path) return null;
+  if (path.startsWith("http")) return path;
+  const base = "http://localhost:8000"; 
+  if (!path.startsWith("/")) {
+    path = "/" + path;
+  }
+  return base + path;
+};
+
   // ⭐ Get restaurant (auth)
   const { data: restaurant } = useQuery({
     queryKey: ["restaurant"],
@@ -44,7 +56,7 @@ const POS = () => {
   };
 
   return (
-    <div className="flex dark:bg-gray-900 min-h-screen">
+    <div className="flex dark:bg-gray-900 ">
 
       {/* LEFT SIDE */}
       <div className="flex-1 p-4">
@@ -75,6 +87,7 @@ const POS = () => {
           cartItems={cartItems}
           setCartItems={setCartItems}
         />
+        
       </div>
 
       {/* RIGHT FIXED SIDE PANEL */}

@@ -97,7 +97,7 @@ export default function OrderSidePanel({ order }) {
   };
 
   return (
-    <aside className="h-full bg-gray-800 text-white flex flex-col">
+    <aside className="h-full bg-gray-800 text-white  ">
 
       {/* HEADER */}
       <div className="p-4 border-b border-gray-700">
@@ -126,9 +126,9 @@ export default function OrderSidePanel({ order }) {
                   <td className="p-2">{it.name}</td>
 
                   <td className="p-2 text-center">
-                    <button onClick={() => updateQty(it.id, "dec")}>-</button>
-                    <span className="px-2">{it.qty}</span>
-                    <button onClick={() => updateQty(it.id, "inc")}>+</button>
+                    <button className="border p-1 border-gray-400" onClick={() => updateQty(it.id, "dec")}>-</button>
+                    <span className="px-2 ">{it.qty}</span>
+                    <button className="border p-1 border-gray-400" onClick={() => updateQty(it.id, "inc")}>+</button>
                   </td>
 
                   <td className="p-2 text-right">₹{it.price}</td>

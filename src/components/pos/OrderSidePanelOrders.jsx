@@ -24,6 +24,7 @@ export default function OrderSidePanelOrders({ open, onClose, order, onSave }) {
   payment_status: order.payment_status || "",
   payment_method: order.payment_method || "",
 });
+console.log(order)
 
     }
   }, [order]);
@@ -174,7 +175,13 @@ const removeItem = (id) => {
               {orderData.items.length ? (
                 orderData.items.map((it) => (
                   <tr key={it.id} className="border-t border-gray-700">
-                    <td className="p-2">{it.menu_item?.name}</td>
+                    <td className="p-2">
+                      {it.menu_item?.name || 
+   it.menuItem?.name || 
+   it.item?.name || 
+   it.name || 
+   "Unknown Item"}
+                      </td>
 
                     <td className="p-2 text-center">
                       <button onClick={() => updateQty(it.id, "dec")}>-</button>

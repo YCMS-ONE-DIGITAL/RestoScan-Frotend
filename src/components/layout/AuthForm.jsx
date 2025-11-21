@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect,useState } from "react";
 import { Eye, EyeOff, Mail, Phone } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import api from "../../api/api"; // <-- correct path
@@ -12,12 +12,24 @@ export default function AuthForm() {
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
 
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
     password: "",
   });
+
+// // 🔥 PREVENT showing login page if already logged in
+useEffect(() => {
+  api
+    .head("/user/me")
+    .then(() => navigate("/dashboard"))
+    .catch(() => {});
+}, []);
+
+
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
