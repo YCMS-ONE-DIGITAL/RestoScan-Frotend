@@ -87,7 +87,12 @@ export default function HomePage() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, delay: 0.3 }}
           whileTap={{ scale: 0.93 }} // ← Mobile tap effect
-          onClick={() => navigate("/customerwebsite/menu")}
+          onClick={() => {
+              const params = new URLSearchParams(window.location.search);
+  const token = params.get("token");
+    navigate(`/customerwebsite/menu?token=${token}`);
+
+          }}
           className="mt-10 group relative overflow-hidden bg-gradient-to-r from-yellow-500 to-orange-600 text-black font-bold text-lg px-8 py-4 rounded-full shadow-xl flex items-center gap-3 transition-all active:scale-95"
         >
           <span>Explore Menu</span>

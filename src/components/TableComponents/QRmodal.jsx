@@ -1,43 +1,46 @@
-import React, { useEffect, useState } from "react";
+// src/components/TableComponents/QRModal.jsx
+import React from "react";
 import { QRCodeCanvas } from "qrcode.react";
 import { X } from "lucide-react";
-import api from "@/api/api";
+import { encryptData } from "@/utils/encryption";
 
-export default function QRModal({ isOpen, onClose, table }) {
-  const [restaurant, setRestaurant] = useState(null);
-
-  useEffect(() => {
-    if (isOpen) {
-      api.get("/user/me").then((res) => {
-        setRestaurant(res.data.user?.restaurant?.name || "restaurant");
-      });
-    }
-  }, [isOpen]);
-
+export default function QRModal({ isOpen, onClose, table, restaurant }) {
   if (!isOpen || !table || !restaurant) return null;
 
-  const qrURL = `http://localhost:5173/customerwebsite?restaurant=${encodeURIComponent(
-    restaurant
-  )}&table=${table.table_no}`;
+  // Create secure encrypted token
+  // encrypt restaurant + table
+const rawToken = encryptData({
+  restaurant_id: restaurant.id,
+  table_no: table.table_no,
+});
+
+// Base64 encode → URL safe
+const token = btoa(rawToken);
+
+// FINAL URL with token (NO encodeURIComponent)
+const qrURL = `http://localhost:5173/customerwebsite/menu?token=${token}`;
+
 
   const downloadQR = () => {
     const canvas = document.getElementById("qr-code");
     const pngUrl = canvas.toDataURL("image/png");
+
     const link = document.createElement("a");
     link.href = pngUrl;
-    link.download = `${restaurant}-Table-${table.table_no}.png`;
+    link.download = `${restaurant.name}-Table-${table.table_no}.png`;
     link.click();
   };
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[999]">
       <div className="bg-white p-6 rounded-xl w-full max-w-sm text-center relative">
+
         <button onClick={onClose} className="absolute top-3 right-3 text-gray-500">
           <X className="w-5 h-5" />
         </button>
 
         <h2 className="text-lg font-bold mb-4">
-          QR Code for {restaurant} – Table {table.number}
+          QR Code for {restaurant.name} – Table {table.table_no}
         </h2>
 
         <div className="flex justify-center items-center">

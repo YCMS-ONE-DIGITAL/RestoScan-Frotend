@@ -79,7 +79,11 @@ export default function Footer() {
       <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40">
         <div className="flex justify-around text-xs py-2">
           <button
-            onClick={() => navigate("/customerwebsite")}
+            onClick={() =>{
+              const params = new URLSearchParams(window.location.search);
+  const token = params.get("token");
+    navigate(`/customerwebsite?token=${token}`);
+            }}
             className={`flex flex-col items-center ${
               isActive("/customerwebsite") ? "text-orange-600" : "text-gray-500"
             }`}
@@ -89,7 +93,11 @@ export default function Footer() {
           </button>
 
           <button
-            onClick={() => navigate("/customerwebsite/menu")}
+            onClick={() => {
+              const params = new URLSearchParams(window.location.search);
+  const token = params.get("token");
+    navigate(`/customerwebsite/menu?token=${token}`);
+            }}
             className={`flex flex-col items-center ${
               isActive("/customerwebsite/menu") ? "text-orange-600" : "text-gray-500"
             }`}
@@ -99,7 +107,11 @@ export default function Footer() {
           </button>
 
           <button
-            onClick={() => navigate("/customerwebsite/orderhistory")}
+            onClick={() => {
+              const params = new URLSearchParams(window.location.search);
+  const token = params.get("token");
+    navigate(`/customerwebsite/orderhistory?token=${token}`);
+            }}
             className={`flex flex-col items-center ${
               isActive("/customerwebsite/orderhistory")
                 ? "text-orange-600"

@@ -1,10 +1,16 @@
+// src/pages/TableList.jsx
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
-  Card, CardHeader, CardTitle, CardContent, CardFooter,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
 } from "@/components/ui/card";
+
 import AddEditTableModal from "../components/TableComponents/AddTableModal";
-import QRModal from "../components/TableComponents/QRmodal";
+import QRModal from "@/components/TableComponents/QRModal";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/api/api";
 
@@ -15,7 +21,7 @@ export default function TableList() {
   const [editTable, setEditTable] = useState(null);
   const [selectedTableForQR, setSelectedTableForQR] = useState(null);
 
-  // ⭐ get restaurant id
+  // ⭐ Fetch restaurant
   const { data: restaurant } = useQuery({
     queryKey: ["restaurant"],
     queryFn: async () => {
@@ -24,7 +30,7 @@ export default function TableList() {
     },
   });
 
-  // ⭐ fetch tables
+  // ⭐ Fetch tables
   const { data: tables = [], isLoading } = useQuery({
     queryKey: ["tables"],
     queryFn: async () => {
@@ -36,7 +42,7 @@ export default function TableList() {
     enabled: !!restaurant,
   });
 
-  // ⭐ delete mutation
+  // ⭐ Delete
   const deleteMutation = useMutation({
     mutationFn: (id) => api.delete(`/restaurant/table/delete/${id}`),
     onSuccess: () => qc.invalidateQueries(["tables"]),
@@ -46,7 +52,9 @@ export default function TableList() {
     <div className="p-6">
       <div className="flex justify-between">
         <h2 className="text-2xl font-semibold text-white">Tables</h2>
-        <Button className="bg-green-600" onClick={() => setIsModalOpen(true)}>+ Add Table</Button>
+        <Button className="bg-green-600" onClick={() => setIsModalOpen(true)}>
+          + Add Table
+        </Button>
       </div>
 
       {isLoading ? (
@@ -64,14 +72,13 @@ export default function TableList() {
 
               <CardContent>
                 <p className="text-sm">Seats: {table.seating_number}</p>
-                {/* <p className="text-sm">Location: {table.location ?? "N/A"}</p> */}
               </CardContent>
 
               <CardFooter className="flex gap-2 justify-between">
                 <Button
                   size="sm"
                   variant="outline"
-                  className="text-black"
+                  className="text-black bg-white"
                   onClick={() => {
                     setEditTable(table);
                     setIsModalOpen(true);
@@ -101,20 +108,26 @@ export default function TableList() {
         </div>
       )}
 
+      {/* Add / Edit */}
       {isModalOpen && (
         <AddEditTableModal
           isOpen={isModalOpen}
-          onClose={() => { setIsModalOpen(false); setEditTable(null); }}
+          onClose={() => {
+            setIsModalOpen(false);
+            setEditTable(null);
+          }}
           onSave={() => qc.invalidateQueries(["tables"])}
           editTable={editTable}
-          restaurantId={restaurant.id}
+          restaurantId={restaurant?.id}
         />
       )}
 
+      {/* QR Modal → PASS restaurant */}
       <QRModal
         isOpen={!!selectedTableForQR}
         onClose={() => setSelectedTableForQR(null)}
         table={selectedTableForQR}
+        restaurant={restaurant}
       />
     </div>
   );

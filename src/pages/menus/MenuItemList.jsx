@@ -1,10 +1,10 @@
+// src/pages/MenuItemsList.jsx
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/api/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import MenuItemsForm from "./MenuItemForm";
-
 
 const getImageUrl = (path) => {
   if (!path) return null;
@@ -13,15 +13,12 @@ const getImageUrl = (path) => {
 
   const base = "http://localhost:8000";
 
-  
   if (!path.startsWith("/")) {
     path = "/" + path;
   }
 
   return base + path;
 };
-
-
 
 export default function MenuItemsList() {
   const qc = useQueryClient();
@@ -50,24 +47,27 @@ export default function MenuItemsList() {
   const { data: categories = [] } = useQuery({
     queryKey: ["categories"],
     queryFn: () =>
-      api
-        .get("/restaurant/categories")
-        .then((r) => r?.data?.data || r?.data || []),
+      api.get("/restaurant/categories").then((r) => r?.data || []),
   });
 
-  // 🟢 Fetch Items by Category
+  // 🟢 Fetch Items (ALL + By Category)
   const { data: items = [], isLoading } = useQuery({
     queryKey: ["menuItems", selectedCategory],
     queryFn: async () => {
-      if (!selectedCategory) return [];
+      let res;
 
-      const res = await api.get(
-        `/restaurant/menu/item/list?category_id=${selectedCategory}`
-      );
+      if (!selectedCategory) {
+        // ⭐ Load ALL menu items
+        res = await api.get("/restaurant/menu/item/list/all");
+      } else {
+        // ⭐ Load category-based items
+        res = await api.get(
+          `/restaurant/menu/item/list?category_id=${selectedCategory}`
+        );
+      }
 
       return res?.data?.data || res?.data || [];
     },
-    enabled: !!selectedCategory,
   });
 
   // 🟢 Delete Item
@@ -91,14 +91,18 @@ export default function MenuItemsList() {
     <div className="p-6 min-h-screen bg-gray-950 text-white">
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+        
+        {/* CATEGORY SELECT */}
         <select
           className="bg-gray-900 border border-gray-700 px-5 py-3 rounded-lg text-lg w-full sm:w-auto"
           value={selectedCategory ?? ""}
           onChange={(e) =>
-            setSelectedCategory(e.target.value ? Number(e.target.value) : null)
+            setSelectedCategory(
+              e.target.value ? Number(e.target.value) : null
+            )
           }
         >
-          <option value="">Select Category</option>
+          <option value="">All Items</option>
 
           {categories.map((cat) => (
             <option key={cat.id} value={cat.id}>
@@ -115,13 +119,9 @@ export default function MenuItemsList() {
       {/* ITEMS LIST */}
       {isLoading ? (
         <p className="text-center py-20 text-gray-400">Loading items...</p>
-      ) : !selectedCategory ? (
-        <p className="text-center py-20 text-gray-400">
-          Please select a category first
-        </p>
       ) : items.length === 0 ? (
         <p className="text-center py-20 text-gray-400">
-          No items in this category yet
+          No items found
         </p>
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -132,7 +132,7 @@ export default function MenuItemsList() {
             >
               <CardHeader className="pb-3">
                 <CardTitle className="flex justify-between items-start gap-3">
-                  <span className="text-lg font-medium truncate">
+                  <span className="text-lg font-medium text-gray-300 truncate">
                     {item.name}
                   </span>
 
@@ -153,16 +153,16 @@ export default function MenuItemsList() {
               </CardHeader>
 
               <CardContent className="space-y-4">
-                {/* IMAGE FIXED */}
+                {/* IMAGE */}
                 {item.image ? (
                   <img
                     src={getImageUrl(item.image)}
                     alt={item.name}
                     className="w-full h-56 object-cover rounded-lg bg-gray-800"
-                    onError={(e) => {
-                      e.target.src =
-                        "https://via.placeholder.com/400x300.png?text=No+Image";
-                    }}
+                    onError={(e) =>
+                      (e.target.src =
+                        "https://via.placeholder.com/400x300.png?text=No+Image")
+                    }
                   />
                 ) : (
                   <div className="bg-gray-800 border-2 border-dashed border-gray-700 rounded-lg h-56 flex items-center justify-center">
@@ -175,7 +175,7 @@ export default function MenuItemsList() {
                 </p>
 
                 <div className="flex justify-between items-end">
-                  <span className="text-3xl font-bold">₹{item.price}</span>
+                  <span className="text-3xl text-green-400 font-bold">₹{item.price}</span>
                   <span
                     className={`text-sm ${
                       item.is_available ? "text-green-400" : "text-red-500"
@@ -198,11 +198,7 @@ export default function MenuItemsList() {
                     variant="destructive"
                     className="flex-1"
                     onClick={() => {
-                      if (
-                        confirm(
-                          "Are you sure you want to delete this item?"
-                        )
-                      ) {
+                      if (confirm("Are you sure you want to delete this item?")) {
                         deleteMutation.mutate(item.id);
                       }
                     }}

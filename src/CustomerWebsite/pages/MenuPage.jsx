@@ -1,187 +1,265 @@
-import { useState } from "react";
+// src/pages/MenuPage.jsx
+import { useState, useEffect } from "react";
 import { Search, Users } from "lucide-react";
 import MenuItemCard from "../Components/MenuItemCard";
 import Footer from "./Footer";
-import { useCart } from "../context/CardContext"; // ✅ added
+import { useCart } from "../context/CardContext";
+import api from "@/api/api";
+import { decryptData } from "@/utils/encryption";
 
 export default function MenuPage() {
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [vegFilter, setVegFilter] = useState("all");
 
-  // ✅ using context instead of local state
-  const { addToCart, removeFromCart, updateNote, cartItems, cartCount, total } = useCart();
+  const [restaurantId, setRestaurantId] = useState(null);
+  const [tableNo, setTableNo] = useState(null);
 
-  const categories = [
-    { id: "all", name: "All", img: "assets/customerwebsite/category/image.jpg" },
-    { id: "pizza", name: "Pizza", img: "https://images.unsplash.com/photo-1601924582971-0302d2b7a9d4?auto=format&fit=crop&w=200&h=200" },
-    { id: "burger", name: "Burger", img: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=200&h=200" },
-    { id: "chicken", name: "Chicken", img: "https://images.unsplash.com/photo-1626645730804-0c07e1e4d93e?auto=format&fit=crop&w=200&h=200" },
-    { id: "beverages", name: "Beverages", img: "https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=200&h=200" },
-    { id: "desserts", name: "Desserts", img: "https://images.unsplash.com/photo-1624353365286-3f8d1dede8c3?auto=format&fit=crop&w=200&h=200" },
-  ];
+  const [categories, setCategories] = useState([
+    { id: "all", name: "All", image: "/assets/customerwebsite/category/image.jpg" }
+  ]);
 
-  const menuItems = [
-    { id: 1, name: "Margherita Pizza", price: 249, img: "https://images.unsplash.com/photo-1601924582971-0302d2b7a9d4", type: "veg", category: "pizza", description: "hello hello Deliciously cooked with premium ingredients." },
-    { id: 2, name: "Pepperoni Pizza", price: 349, img: "https://images.unsplash.com/photo-1628840042765-0a5c5a351139", type: "nonveg", category: "pizza" },
-    { id: 3, name: "Veg Burger", price: 199, img: "https://images.unsplash.com/photo-1550547660-d9450f859349", type: "veg", category: "burger" },
-    { id: 4, name: "Chicken Burger", price: 249, img: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd", type: "nonveg", category: "burger" },
-    { id: 5, name: "Chicken Wings", price: 299, img: "https://images.unsplash.com/photo-1626645730804-0c07e1e4d93e", type: "nonveg", category: "chicken" },
-    { id: 6, name: "Cold Coffee", price: 149, img: "https://images.unsplash.com/photo-1509042239860-f550ce710b93", type: "veg", category: "beverages" },
-    { id: 7, name: "Gulab Jamun", price: 99, img: "https://images.unsplash.com/photo-1624353365286-3f8d1dede8c3", type: "veg", category: "desserts" },
-  ];
+  const [menuItems, setMenuItems] = useState([]);
+  const [loading, setLoading] = useState(true);
 
+  const { addToCart, removeFromCart, updateNote, cartItems, cartCount, total } =
+    useCart();
+
+
+  const getImageUrl = (path) => {
+    if (!path) return null;
+
+    if (path.startsWith("http")) return path;
+
+    const base = "http://localhost:8000";
+
+    if (!path.startsWith("/")) {
+      path = "/" + path;
+    }
+
+    return base + path;
+  };
+  // ⭐ 1) Decode Token
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const baseToken = params.get("token");
+
+    if (!baseToken) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const encryptedString = atob(baseToken);
+      const data = decryptData(encryptedString);
+
+      if (data) {
+        setRestaurantId(data.restaurant_id);
+        setTableNo(data.table_no);
+      } else {
+        setLoading(false);
+      }
+    } catch (error) {
+      setLoading(false);
+    }
+  }, []);
+
+  // ⭐ 2) Fetch CATEGORIES (once restaurantId is ready)
+  useEffect(() => {
+    if (!restaurantId) return;
+
+    api
+      .get(`/public/categories?restaurant_id=${restaurantId}`)
+      .then((res) => {
+        const formatted = res.data.map((cat) => ({
+          id: cat.id,
+          name: cat.name,
+          image: "/assets/customerwebsite/category/image.jpg",
+        }));
+
+        setCategories([
+          { id: "all", name: "All", image: "/assets/customerwebsite/category/image.jpg" },
+          ...formatted,
+        ]);
+      })
+      .catch((err) => console.log("CATEGORY ERROR =", err.response?.data));
+  }, [restaurantId]);
+
+
+  // ⭐ 3) Fetch MENU ITEMS
+  useEffect(() => {
+    if (!restaurantId) return;
+
+    api
+      .get(`/public/menu/items?restaurant_id=${restaurantId}`)
+      .then((res) => {
+        const raw = Array.isArray(res.data)
+          ? res.data
+          : res.data.data || [];
+
+        const items = raw.map((item) => ({
+          id: item.id,
+          name: item.item_name ?? item.name ?? "",
+          price: item.item_price ?? item.price ?? 0,
+          img: getImageUrl(item.item_image ?? item.image), // 👈 FIXED HERE
+          type: item.item_type ?? item.type ?? "",
+          category: item.category_id,
+          description: item.description ?? "",
+        }));
+
+        setMenuItems(items);
+      })
+      .catch((err) => console.log("MENU API ERROR =", err.response?.data))
+      .finally(() => setLoading(false));
+  }, [restaurantId]);
+
+  // ⭐ 4) Filtering
   const filteredMenu = menuItems.filter((item) => {
-    const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase());
-    const matchesCategory = selectedCategory === "all" || item.category === selectedCategory;
-    const matchesVegFilter =
+    const matchSearch =
+      (item.name || "").toLowerCase().includes(search.toLowerCase());
+
+    const matchCat =
+      selectedCategory === "all" ||
+      item.category === selectedCategory;
+
+    const matchVeg =
       vegFilter === "all" ||
       (vegFilter === "veg" && item.type === "veg") ||
-      (vegFilter === "nonveg" && item.type === "nonveg");
-    return matchesSearch && matchesCategory && matchesVegFilter;
+      (vegFilter === "non_veg" && item.type === "non_veg");
+
+    return matchSearch && matchCat && matchVeg;
   });
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen text-gray-700 text-lg">
+        Loading menu...
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
       {/* HEADER */}
       <header className="bg-white shadow-sm px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-gray-200">
-            <img
-              src="/assets/customerwebsite/category/image.jpg"
-              alt="Logo"
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <h1 className="font-bold text-gray-800">RestoScan</h1>
+        <h1 className="font-bold text-gray-800">RestoScan</h1>
+        <div className="flex items-center gap-2 bg-gray-100 px-3 py-1 rounded-full">
+          <Users size={16} />
+          Table {tableNo ?? "-"}
         </div>
-       <div className=" flex items-center gap-2">
-        <div className="flex items-center gap-1 bg-[#f2f4f6] border  text-xs px-3 py-1.5 rounded-full shadow text-dark active:scale-95 transition">
-          <svg width="16" height="17" viewBox="0 0 16 17" fill="none">
-            <path d="M8.16016 6.77588V13.0794" stroke="#000000" strokeLinecap="round"></path>
-            <path
-              d="M8.16021 6.61556C11.3806 6.61556 13.9913 6.12606 13.9913 5.52223C13.9913 4.9184 11.3806 4.42889 8.16021 4.42889C4.93978 4.42889 2.3291 4.9184 2.3291 5.52223C2.3291 6.12606 4.93978 6.61556 8.16021 6.61556Z"
-              stroke="#000000"
-            ></path>
-            <path d="M5.61597 13.4641H10.7043" stroke="#000000" strokeLinecap="round"></path>
-          </svg>
-          <span className="  text-dark text-xs rounded-full w-3 h-3 flex items-center justify-center font-bold">
-            1
-          </span>
-          </div>
-
-           <button
-        onClick={() => console.log("Group Order Clicked")}
-        className="flex items-center gap-1 bg-[#f2f4f6] border  text-xs px-3 py-1.5 rounded-full shadow text-dark active:scale-95 transition"
-      >
-        <Users size={13} /> Group Order
-      </button>
-        </div>
-
-
-        
       </header>
 
-      {/* SEARCH + FILTERS */}
-      <div className="sticky top-0 z-40 bg-white border-b border-gray-100">
-        <div className="px-4 py-3 flex items-center gap-2">
-          <div className="flex-1 flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-2 min-w-0">
-            <Search className="w-5 h-5 text-gray-500 flex-shrink-0" />
-            <input
-              type="text"
-              placeholder="Search dishes..."
-              className="bg-transparent flex-1 outline-none text-sm truncate"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
+      {/* SEARCH */}
+     {/* SEARCH + VEG FILTER SECTION */}
+<div className="sticky top-0 bg-white px-4 py-3 border-b space-y-3">
 
-          <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide whitespace-nowrap flex-shrink-0">
-            <button
-              onClick={() => setVegFilter("all")}
-              className={`px-2.5 py-1.5 rounded-full text-xs font-medium transition-all flex-shrink-0
-                ${
-                  vegFilter === "all"
-                    ? "bg-orange-500 text-white shadow-sm"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-            >
-              All
-            </button>
-            <button
-              onClick={() => setVegFilter("veg")}
-              className={`px-2.5 py-1.5 rounded-full text-xs font-medium transition-all flex-shrink-0 flex items-center gap-1
-                ${
-                  vegFilter === "veg"
-                    ? "bg-green-100 text-green-700 border border-green-300"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-            >
-              <div className="w-3 h-3 rounded border-2 border-green-600 flex items-center justify-center">
-                <div className="w-1.5 h-1.5 rounded-full bg-green-600" />
-              </div>
-              <span>Veg</span>
-            </button>
-            <button
-              onClick={() => setVegFilter("nonveg")}
-              className={`px-2.5 py-1.5 rounded-full text-xs font-medium transition-all flex-shrink-0 flex items-center gap-1
-                ${
-                  vegFilter === "nonveg"
-                    ? "bg-red-100 text-red-700 border border-red-300"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-            >
-              <div className="w-3 h-3 rounded border-2 border-red-600 flex items-center justify-center">
-                <div className="w-1.5 h-1.5 rounded-full bg-red-600" />
-              </div>
-              <span>Non-Veg</span>
-            </button>
-          </div>
-        </div>
+  {/* SEARCH BAR */}
+  <div className="flex items-center bg-gray-100 px-3 py-2 rounded-lg">
+    <Search className="w-5 h-5 text-gray-600" />
+    <input
+      type="text"
+      placeholder="Search dishes..."
+      className="flex-1 bg-transparent outline-none ml-3 text-sm"
+      value={search}
+      onChange={(e) => setSearch(e.target.value)}
+    />
+  </div>
 
-        {/* CATEGORIES */}
-        <div className="px-4 py-2">
-          <div className="flex gap-3 overflow-x-auto scrollbar-hide whitespace-nowrap">
-            {categories.map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => setSelectedCategory(cat.id)}
-                className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-all duration-200 flex-shrink-0
-                  ${
-                    selectedCategory === cat.id
-                      ? "bg-orange-100 text-orange-600 shadow-sm"
-                      : "text-gray-600 hover:bg-gray-100"
-                  }`}
-              >
-                <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-gray-200">
-                  <img src={cat.img} alt={cat.name} className="w-full h-full object-cover" />
-                </div>
-                <span className="text-xs font-medium">{cat.name}</span>
-              </button>
-            ))}
-          </div>
+  {/* FILTER BUTTONS */}
+  <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
+
+    <button
+      onClick={() => setVegFilter("all")}
+      className={`px-4 py-1.5 rounded-full text-xs font-medium whitespace-nowrap
+        ${vegFilter === "all"
+          ? "bg-orange-500 text-white shadow-sm"
+          : "bg-gray-100 text-gray-700"
+        }`}
+    >
+      All
+    </button>
+
+    <button
+      onClick={() => setVegFilter("veg")}
+      className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-medium whitespace-nowrap
+        ${vegFilter === "veg"
+          ? "bg-green-100 text-green-700 border border-green-400"
+          : "bg-gray-100 text-gray-700"
+        }`}
+    >
+      <span className="w-3 h-3 rounded-full border-2 border-green-600 flex items-center justify-center">
+        <span className="w-2 h-2 rounded-full bg-green-600" />
+      </span>
+      Veg
+    </button>
+
+    <button
+      onClick={() => setVegFilter("non_veg")}
+      className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-medium whitespace-nowrap
+        ${vegFilter === "non_veg"
+          ? "bg-red-100 text-red-700 border border-red-400"
+          : "bg-gray-100 text-gray-700"
+        }`}
+    >
+      <span className="w-3 h-3 rounded-full border-2 border-red-600 flex items-center justify-center">
+        <span className="w-2 h-2 rounded-full bg-red-600" />
+      </span>
+      Non-Veg
+    </button>
+
+  </div>
+
+</div>
+
+
+
+
+      {/* CATEGORY SLIDER */}
+      <div className="px-4 py-2">
+        <div className="flex gap-3 overflow-x-auto scrollbar-hide whitespace-nowrap">
+          {categories.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => setSelectedCategory(cat.id)}
+              className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg flex-shrink-0 ${selectedCategory === cat.id
+                  ? "bg-orange-100 text-orange-600 shadow-sm"
+                  : "text-gray-600 hover:bg-gray-100"
+                }`}
+            >
+              <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-gray-200">
+                <img
+                  src={cat.image}
+                  alt={cat.name}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <span className="text-xs font-medium">{cat.name}</span>
+            </button>
+          ))}
         </div>
       </div>
 
       {/* MENU LIST */}
-      <div className="px-4 pt-3">
+      <div className="px-4 py-3">
         {filteredMenu.length > 0 ? (
           filteredMenu.map((item) => {
             const existing = cartItems.find((c) => c.id === item.id);
-            const quantity = existing ? existing.quantity : 0;
+            const qty = existing ? existing.quantity : 0;
 
             return (
               <MenuItemCard
                 key={item.id}
                 item={item}
-                onAdd={() => addToCart(item)} // ✅ global add
-                onRemove={() => removeFromCart(item.id)} // ✅ global remove
-                quantity={quantity}
+                quantity={qty}
+                onAdd={() => addToCart(item)}
+                onRemove={() => removeFromCart(item.id)}
               />
             );
           })
         ) : (
-          <p className="text-center text-gray-500 py-8 text-sm">No items found</p>
+          <p className="text-center text-gray-500 py-10">
+            No menu items found
+          </p>
         )}
       </div>
 
