@@ -10,9 +10,12 @@ import {
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useCart } from "../context/CardContext";
+import api from "@/api/api";
+
 import UserDetailsWithOtpModal from "../Components/UserDetailsModal"; // ✅ IMPORT MODAL
 
-export default function Footer() {
+export default function Footer({restaurantId,
+    tableNo,tableId}) {
   const {
     cartItems,
     cartCount,
@@ -22,6 +25,8 @@ export default function Footer() {
     updateNote,
     clearCart,
   } = useCart();
+
+  // console.log()
 
   const [isCartModalOpen, setIsCartModalOpen] = useState(false);
   const [showConfirmClear, setShowConfirmClear] = useState(false);
@@ -64,14 +69,54 @@ export default function Footer() {
   };
 
   // ✅ Verify OTP
-  const handleVerifyOtp = () => {
-    if (otp !== "1234") {
-      setErrors({ otp: "Invalid OTP" });
-      return;
-    }
-    setIsUserModalOpen(false);
-    navigate("/thank-you");
-  };
+  const handleVerifyOtp = async () => {
+  if (otp !== "1234") {
+    setErrors({ otp: "Invalid OTP" });
+    return;
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get("token");
+
+  if (!token) {
+    alert("Token missing!");
+    return;
+  }
+
+  // ⭐ VALIDATION
+  if (!restaurantId || !tableNo) {
+    alert("Something went wrong. Table/Restaurant missing.");
+    return;
+  }
+
+  try {
+    // ⭐ PREPARE PAYLOAD
+   const payload = {
+  restaurant_id: Number(restaurantId),
+  table_id: Number(tableId),
+  name,        
+  phone,       
+  items: cartItems.map(item => ({
+    menu_item_id: item.id,
+    quantity: item.quantity
+  }))
+};
+
+  
+    // ⭐ CALL ORDER CREATE API
+const res = await api.post("/public/order/create", payload);
+
+    // console.log("ORDER SUCCESS:",payload);
+
+    // ⭐ Navigate to order history
+    navigate(`/customerwebsite/orderhistory?token=${token}`);
+  } catch (err) {
+    console.error("ORDER ERROR:", err);
+    alert("Order creation failed");
+  }
+};
+
+
 
   return (
     <>

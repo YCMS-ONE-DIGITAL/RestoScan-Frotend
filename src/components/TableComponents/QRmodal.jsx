@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 import { encryptData } from "@/utils/encryption";
 
 export default function QRModal({ isOpen, onClose, table, restaurant }) {
+  // console.log(table.id)
   if (!isOpen || !table || !restaurant) return null;
 
   // Create secure encrypted token
@@ -12,6 +13,8 @@ export default function QRModal({ isOpen, onClose, table, restaurant }) {
 const rawToken = encryptData({
   restaurant_id: restaurant.id,
   table_no: table.table_no,
+  table_id: table.id,       // ← unique table ID
+
 });
 
 // Base64 encode → URL safe

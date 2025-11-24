@@ -14,6 +14,7 @@ export default function MenuPage() {
 
   const [restaurantId, setRestaurantId] = useState(null);
   const [tableNo, setTableNo] = useState(null);
+  const [tableId, setTableId] = useState(null);
 
   const [categories, setCategories] = useState([
     { id: "all", name: "All", image: "/assets/customerwebsite/category/image.jpg" }
@@ -24,6 +25,8 @@ export default function MenuPage() {
 
   const { addToCart, removeFromCart, updateNote, cartItems, cartCount, total } =
     useCart();
+
+    // console.log(tableNo)
 
 
   const getImageUrl = (path) => {
@@ -56,6 +59,8 @@ export default function MenuPage() {
       if (data) {
         setRestaurantId(data.restaurant_id);
         setTableNo(data.table_no);
+        setTableId(data.table_id);
+
       } else {
         setLoading(false);
       }
@@ -137,6 +142,7 @@ export default function MenuPage() {
       </div>
     );
   }
+
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
@@ -271,6 +277,9 @@ export default function MenuPage() {
         onAddQuantity={addToCart}
         onUpdateQuantity={removeFromCart}
         onUpdateNote={updateNote}
+          restaurantId={restaurantId}   // ⭐ ADD
+  tableNo={tableNo}
+  tableId={tableId}     
       />
     </div>
   );
