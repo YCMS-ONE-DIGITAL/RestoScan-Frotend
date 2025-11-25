@@ -6,7 +6,6 @@ export default function MenuGrid({ search, filterCat, cartItems, setCartItems })
     queryKey: ["allMenuItems"],
     queryFn: async () => {
       const res = await api.get("/restaurant/menu/item/list/all");
-      console.log(res.data.data)
       return res.data.data ?? [];
 
     },

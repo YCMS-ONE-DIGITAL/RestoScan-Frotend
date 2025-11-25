@@ -1,116 +1,219 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import OrderCard from '../components/DashboardComponents/OrderCard';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import api from "@/api/api";
 
-const KOT = () => {
-    const navigate = useNavigate();
-    const [dateRangeType, setDateRangeType] = useState("today");
-    const [startDate, setStartDate] = useState("2025-11-07");
-    const [endDate, setEndDate] = useState("2025-11-07");
-    const [filterOrders, setFilterOrders] = useState("");
+import OrderCard from "../components/DashboardComponents/OrderCard";
+import OrderSidePanelOrders from "../components/pos/OrderSidePanelOrders";
 
-    // Dummy Orders Data
-    const orders = [
-        {
-            id: 7,
-            status: "Paid",
-            items: 1,
-            total: 400,
-            time: "November 07, 2025 13:27 PM",
-        },
-    ];
+export default function KOT() {
+  const navigate = useNavigate();
+  const qc = useQueryClient();
 
-    return (
-        <div className="p-4 bg-gray dark:bg-gray-800 dark:border-gray-700">
-            {/* Header */}
-            <div className="flex mb-4">
-                <h1 className="text-xl font-semibold text-white-900 sm:text-2xl dark:text-white">
-                    Orders ({orders.length})
-                </h1>
-            </div>
+  const [dateRangeType, setDateRangeType] = useState("today");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
 
-            {/* Filters Section */}
-            <div className="items-center justify-between block sm:flex ">
-                <div className="lg:flex items-center mb-4 sm:mb-0 gap-2">
-                    <div className="lg:flex gap-2 items-center">
-                        {/* Date Range Selector */}
-                        <select
-                            value={dateRangeType}
-                            onChange={(e) => setDateRangeType(e.target.value)}
-                            className="border-gray-300 focus:ring-white-300 rounded-md shadow-sm  bg-gray-900 dark:text-gray-300"
-                        >
-                            <option value="today">Today</option>
-                            <option value="currentWeek">Current Week</option>
-                            <option value="lastWeek">Last Week</option>
-                            <option value="last7Days">Last 7 Days</option>
-                            <option value="currentMonth">Current Month</option>
-                            <option value="lastMonth">Last Month</option>
-                            <option value="currentYear">Current Year</option>
-                            <option value="lastYear">Last Year</option>
-                        </select>
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [openPanel, setOpenPanel] = useState(false);
 
-                        {/* Date Picker */}
-                        <div className="flex items-center w-full bg-gray">
-                            <input
-                                type="date"
-                                value={startDate}
-                                onChange={(e) => setStartDate(e.target.value)}
-                                className="border-gray-300 text-white-800 bg-gray-600 px-2 py-2 rounded"
-                            />
-                            <span className="mx-4 text-gray-500">To</span>
-                            <input
-                                type="date"
-                                value={endDate}
-                                onChange={(e) => setEndDate(e.target.value)}
-                                className="border-gray-300 text-white-800 bg-gray-600 px-2 py-2 rounded"
-                            />
-                        </div>
-                    </div>
-                    <div class="whitespace-nowrap items-center font-medium
-                        cursor-pointer p-2 text-center rounded-md text-sm border hover:text-gray-900 bg-gray-800
-                        hover:bg-gray-200 w-full dark:bg-gray-800 dark:hover:bg-gray-700
-                        dark:hover:text-white dark:text-neutral-400">
-                       In Kitchen (0)
-                    </div>
-                    <div class="whitespace-nowrap items-center font-medium
-                        cursor-pointer p-2 text-center rounded-md text-sm border hover:text-gray-900 bg-gray-800
-                        hover:bg-gray-200 w-full dark:bg-gray-800 dark:hover:bg-gray-700
-                        dark:hover:text-white dark:text-neutral-400">
-                        Food is Ready (0)
-                    </div>
-                    <div class="whitespace-nowrap items-center font-medium
-                        cursor-pointer p-2 text-center rounded-md text-sm border hover:text-gray-900 bg-gray-800
-                        hover:bg-gray-200 w-full dark:bg-gray-800 dark:hover:bg-gray-700
-                        dark:hover:text-white dark:text-neutral-400">
-                        Food is Served (0)
-                    </div>
+  // ✅ Pagination State
+  const [page, setPage] = useState(1);
 
+  // ✅ Fetch orders based on filters + pagination
+  const { data, isLoading } = useQuery({
+    queryKey: ["kotOrders", page, dateRangeType, startDate, endDate],
+    queryFn: async () => {
+      const res = await api.get("/restaurant/orders/filter", {
+        params: { page, per_page: 9, dateRangeType, startDate, endDate },
+      });
+      return res.data;
+    },
+    keepPreviousData: true,
+    refetchOnWindowFocus: true,
+    staleTime: 0,
+  });
 
-                </div>
+  const orders = data?.data ?? [];
+  const pagination = data?.pagination ?? {};
 
-                {/* New Order Button */}
-                <button
-                    onClick={() => navigate("/pos")}
-                    className="bg-orange-600 text-white px-5 py-2.5 rounded-lg"
-                >
-                    + New Order
-                </button>
-            </div>
+  // ✅ Update Order
+  const updateOrder = useMutation({
+    mutationFn: (payload) => api.post("/restaurant/orders/update", payload),
+    onSuccess: () => {
+      qc.invalidateQueries(["kotOrders"]);
+      setOpenPanel(false);
+    },
+  });
 
-            {/* Orders List */}
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
-                <OrderCard
-                    table="T01"
-                    orderNo="3"
-                    status="KOT"
-                    statusText="Cooking Now"
-                    time="November 06, 2025 11:07 AM"
-                    items="1 Item(s)"
-                    total="$200"
-                />
-            </div>
-        </div>
-    );
+  const handleSaveOrder = (updatedOrder, deletedItems = []) => {
+    updateOrder.mutate({
+      order_id: updatedOrder.id,
+      status: updatedOrder.status,
+      payment_status: updatedOrder.payment_status,
+      payment_method: updatedOrder.payment_method,
+      items: updatedOrder.items.map((it) => ({
+        order_item_id: it.id,
+        quantity: it.quantity,
+      })),
+      deleted_items: deletedItems,
+    });
+  };
+
+  // ✅ Apply status filter locally
+  const displayedOrders = orders.filter((o) => {
+    if (!statusFilter) return true;
+    return o.status === statusFilter;
+  });
+
+  return (
+    <div className="p-4 bg-gray dark:bg-gray-800 dark:border-gray-700">
+
+      {/* Header */}
+      <div className="flex justify-between mb-4">
+        <h1 className="text-xl font-semibold dark:text-white">
+          Orders ({pagination.total ?? displayedOrders.length})
+        </h1>
+
+        <button
+          onClick={() => navigate("/pos")}
+          className="bg-orange-600 text-white px-5 py-2.5 rounded-lg"
+        >
+          + New Order
+        </button>
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-wrap gap-3 items-center">
+
+        {/* Date Range Dropdown */}
+        <select
+          value={dateRangeType}
+          onChange={(e) => setDateRangeType(e.target.value)}
+          className="bg-gray-900 text-gray-200 px-3 py-2 rounded-md border border-gray-600"
+        >
+          <option value="today">Today</option>
+          <option value="yesterday">Yesterday</option>
+          <option value="last7days">Last 7 Days</option>
+          <option value="currentMonth">Current Month</option>
+          <option value="lastMonth">Last Month</option>
+          <option value="custom">Custom Range</option>
+        </select>
+
+        {/* Custom Date Range */}
+        {dateRangeType === "custom" && (
+          <div className="flex items-center gap-2">
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="bg-gray-700 text-white px-2 py-1 rounded"
+            />
+            <span className="text-gray-400">to</span>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="bg-gray-700 text-white px-2 py-1 rounded"
+            />
+          </div>
+        )}
+
+        {/* Status filters */}
+        <button
+          onClick={() => setStatusFilter("")}
+          className={`px-3 py-1 rounded-md border ${
+            statusFilter === "" ? "bg-orange-600 text-white" : "bg-gray-800 text-gray-300"
+          }`}
+        >
+          All ({orders.length})
+        </button>
+
+        <button
+          onClick={() => setStatusFilter("preparing")}
+          className={`px-3 py-1 rounded-md border ${
+            statusFilter === "preparing" ? "bg-orange-600 text-white" : "bg-gray-800 text-gray-300"
+          }`}
+        >
+          In Kitchen ({orders.filter(o => o.status === "preparing").length})
+        </button>
+
+        <button
+          onClick={() => setStatusFilter("served")}
+          className={`px-3 py-1 rounded-md border ${
+            statusFilter === "served" ? "bg-orange-600 text-white" : "bg-gray-800 text-gray-300"
+          }`}
+        >
+          Ready ({orders.filter(o => o.status === "served").length})
+        </button>
+
+        <button
+          onClick={() => setStatusFilter("completed")}
+          className={`px-3 py-1 rounded-md border ${
+            statusFilter === "completed" ? "bg-orange-600 text-white" : "bg-gray-800 text-gray-300"
+          }`}
+        >
+          Served ({orders.filter(o => o.status === "completed").length})
+        </button>
+      </div>
+
+      {/* Orders List */}
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+        {isLoading ? (
+          <p className="text-gray-400">Loading orders...</p>
+        ) : displayedOrders.length > 0 ? (
+          displayedOrders.map((order) => (
+            <OrderCard
+              key={order.id}
+              table={order.table?.table_no ?? "N/A"}
+              orderNo={order.id}
+              status={order.status}
+              paymentStatus={order.payment_status}
+              time={new Date(order.created_at).toLocaleString()}
+              items={`${order.items?.length ?? 0} Item(s)`}
+              total={`₹${order.total_amount}`}
+              onClick={() => {
+                setSelectedOrder(order);
+                setOpenPanel(true);
+              }}
+            />
+          ))
+        ) : (
+          <p className="text-gray-400">No matching orders</p>
+        )}
+      </div>
+
+      {/* ✅ Pagination Section */}
+      <div className="flex justify-center items-center gap-4 mt-6">
+        <button
+          disabled={page === 1}
+          onClick={() => setPage((p) => p - 1)}
+          className="px-4 py-2 bg-gray-700 text-white rounded disabled:opacity-40"
+        >
+          Previous
+        </button>
+
+        <span className="text-gray-300">
+          Page {pagination.current_page ?? page} of {pagination.last_page ?? 1}
+        </span>
+
+        <button
+          disabled={page === pagination.last_page}
+          onClick={() => setPage((p) => p + 1)}
+          className="px-4 py-2 bg-gray-700 text-white rounded disabled:opacity-40"
+        >
+          Next
+        </button>
+      </div>
+
+      {/* Order Edit Panel */}
+      <OrderSidePanelOrders
+        open={openPanel}
+        onClose={() => setOpenPanel(false)}
+        order={selectedOrder}
+        onSave={handleSaveOrder}
+      />
+    </div>
+  );
 }
-
-export default KOT

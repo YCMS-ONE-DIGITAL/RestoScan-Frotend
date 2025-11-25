@@ -2,26 +2,28 @@ import React, { useState, useEffect, useMemo } from "react";
 import api from "@/api/api";
 
 export default function OrderSidePanel({ order }) {
-
   const [orderData, setOrderData] = useState({
     items: [],
     table_id: null,
-    table_no:null,
+    table_no: null,
+    order_type: "dine_in", // ✅ must match DB ENUM
+    customer_name: "",
+    customer_phone: "",
   });
 
-  // Load order whenever cart changes
+  // ✅ Load cart/order data smoothly
   useEffect(() => {
     if (order) {
-      console.log(order);
-      setOrderData({
+      setOrderData((prev) => ({
+        ...prev,
         items: order.items || [],
         table_id: order.table_id || null,
         table_no: order.table_no || null,
-      });
+      }));
     }
   }, [order]);
 
-  // Total Calculation
+  // ✅ Total Calculation
   const totals = useMemo(() => {
     let sub = 0;
     let count = 0;
@@ -33,10 +35,10 @@ export default function OrderSidePanel({ order }) {
       count += qty;
     });
 
-    return { count, subTotal: sub, total: sub };
+    return { count, total: sub };
   }, [orderData.items]);
 
-  // Qty Update
+  // ✅ Qty Update
   const updateQty = (id, type) => {
     setOrderData((prev) => ({
       ...prev,
@@ -44,19 +46,14 @@ export default function OrderSidePanel({ order }) {
         it.id === id
           ? {
               ...it,
-              qty:
-                type === "inc"
-                  ? Number(it.qty) + 1
-                  : Number(it.qty) > 1
-                  ? Number(it.qty) - 1
-                  : 1,
+              qty: type === "inc" ? Number(it.qty) + 1 : Math.max(1, Number(it.qty) - 1),
             }
           : it
       ),
     }));
   };
 
-  // Remove item
+  // ✅ Remove item
   const removeItem = (id) => {
     setOrderData((prev) => ({
       ...prev,
@@ -64,21 +61,25 @@ export default function OrderSidePanel({ order }) {
     }));
   };
 
-  // ⭐ CREATE ORDER API CALL
+  // ✅ CREATE ORDER API CALL
   const createOrder = async () => {
-    if (!orderData.table_id) {
-      alert("Please select a table");
-      return;
-    }
-
     if (orderData.items.length === 0) {
       alert("No items added!");
       return;
     }
 
+    // ✅ Dine-in requires table
+    if (orderData.order_type === "dine_in" && !orderData.table_id) {
+      alert("Please select a table");
+      return;
+    }
+
     try {
       const payload = {
-        table_id: Number(orderData.table_id),
+        order_type: orderData.order_type,
+        table_id: orderData.order_type === "dine_in" ? Number(orderData.table_id) : null,
+        customer_name: orderData.customer_name || null,
+        customer_phone: orderData.customer_phone || null,
         items: orderData.items.map((i) => ({
           menu_item_id: i.id,
           quantity: Number(i.qty),
@@ -97,14 +98,63 @@ export default function OrderSidePanel({ order }) {
   };
 
   return (
-    <aside className="h-full bg-gray-800 text-white  ">
+    <aside className="h-full bg-gray-800 text-white flex flex-col">
 
       {/* HEADER */}
       <div className="p-4 border-b border-gray-700">
-        <h2 className="text-lg font-semibold">
-          Table: {orderData.table_no || "Select Table"}
-        </h2>
+        <h2 className="text-lg font-semibold">Create Order</h2>
       </div>
+
+      {/* ✅ Order Type Selector */}
+      <div className="p-4 flex flex-col gap-2 border-b border-gray-700">
+        <label className="text-sm text-gray-300">Order Type</label>
+        <select
+          className="bg-gray-700 p-2 rounded"
+          value={orderData.order_type}
+          onChange={(e) =>
+            setOrderData((o) => ({ ...o, order_type: e.target.value }))
+          }
+        >
+          <option value="dine_in">Dine-In</option>
+          <option value="parcel">Parcel</option>
+          <option value="delivery">Delivery</option>
+        </select>
+      </div>
+
+      {/* ✅ Customer Fields */}
+      <div className="px-4 py-2 flex flex-col gap-2 border-b border-gray-700">
+        <label className="text-sm text-gray-300">Customer (Optional)</label>
+
+        <input
+          type="text"
+          placeholder="Customer Name"
+          className="bg-gray-700 p-2 rounded"
+          value={orderData.customer_name}
+          onChange={(e) =>
+            setOrderData((o) => ({ ...o, customer_name: e.target.value }))
+          }
+        />
+
+        <input
+          type="tel"
+          placeholder="Phone Number"
+          maxLength="10"
+          className="bg-gray-700 p-2 rounded"
+          value={orderData.customer_phone}
+          onChange={(e) =>
+            setOrderData((o) => ({ ...o, customer_phone: e.target.value }))
+          }
+        />
+      </div>
+
+      {/* ✅ Show table only for dine-in */}
+      {orderData.order_type === "dine_in" && (
+        <div className="p-4 border-b border-gray-700">
+          <h2 className="text-lg font-semibold">
+            Table: {orderData.table_no || "Select Table"}
+          </h2>
+        </div>
+      )}
 
       {/* ITEMS */}
       <div className="p-4 flex overflow-auto">
@@ -127,7 +177,7 @@ export default function OrderSidePanel({ order }) {
 
                   <td className="p-2 text-center">
                     <button className="border p-1 border-gray-400" onClick={() => updateQty(it.id, "dec")}>-</button>
-                    <span className="px-2 ">{it.qty}</span>
+                    <span className="px-2">{it.qty}</span>
                     <button className="border p-1 border-gray-400" onClick={() => updateQty(it.id, "inc")}>+</button>
                   </td>
 

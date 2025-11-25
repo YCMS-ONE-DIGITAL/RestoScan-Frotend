@@ -11,22 +11,10 @@ const POS = () => {
   const [filterCat, setFilterCat] = useState(null);
   const [cartItems, setCartItems] = useState([]);
 
-  const [selectedTable, setSelectedTable] = useState("");       // table ID
+  const [selectedTable, setSelectedTable] = useState(""); // table ID
   const [selectedTableNumber, setSelectedTableNumber] = useState(""); // table_no
 
-
-  
-const getImageUrl = (path) => {
-  if (!path) return null;
-  if (path.startsWith("http")) return path;
-  const base = "http://localhost:8000"; 
-  if (!path.startsWith("/")) {
-    path = "/" + path;
-  }
-  return base + path;
-};
-
-  // ⭐ Get restaurant (auth)
+  // ✅ Get logged-in restaurant
   const { data: restaurant } = useQuery({
     queryKey: ["restaurant"],
     queryFn: async () => {
@@ -35,7 +23,7 @@ const getImageUrl = (path) => {
     },
   });
 
-  // ⭐ Fetch tables
+  // ✅ Fetch tables
   const { data: tables = [] } = useQuery({
     queryKey: ["tables"],
     queryFn: async () => {
@@ -47,7 +35,7 @@ const getImageUrl = (path) => {
     enabled: !!restaurant,
   });
 
-  // ⭐ When selecting a table
+  // ✅ Select table
   const handleSelectTable = (tableId) => {
     setSelectedTable(tableId);
 
@@ -56,14 +44,14 @@ const getImageUrl = (path) => {
   };
 
   return (
-    <div className="flex dark:bg-gray-900 ">
+    <div className="flex dark:bg-gray-900">
 
-      {/* LEFT SIDE */}
+      {/* LEFT MENU SIDE */}
       <div className="flex-1 p-4">
         <div className="flex justify-between items-center mb-3">
           <MenuSearchBar search={search} setSearch={setSearch} />
 
-          {/* ⭐ DYNAMIC TABLE DROPDOWN */}
+          {/* ✅ Table Dropdown */}
           <select
             className="bg-gray-800 text-white px-3 py-2 rounded"
             value={selectedTable}
@@ -87,16 +75,15 @@ const getImageUrl = (path) => {
           cartItems={cartItems}
           setCartItems={setCartItems}
         />
-        
       </div>
 
-      {/* RIGHT FIXED SIDE PANEL */}
+      {/* ✅ ORDER PANEL */}
       <div className="w-[380px] border-l border-gray-700">
         <OrderSidePanel
           order={{
             items: cartItems,
             table_id: selectedTable,
-            table_no: selectedTableNumber,   // ⭐ VERY IMPORTANT
+            table_no: selectedTableNumber,
             orderNo: "New",
           }}
         />

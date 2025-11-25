@@ -20,6 +20,8 @@ export default function OrderSidePanelOrders({ open, onClose, order, onSave }) {
   items: order.items || [],
   table_id: order.table_id || null,
   table_no: order.table?.table_no || "---",
+    customer: order.customer || null,  // ✅ add this
+
   status: order.status || "",
   payment_status: order.payment_status || "",
   payment_method: order.payment_method || "",
@@ -94,6 +96,22 @@ const removeItem = (id) => {
         className={`fixed top-0 right-0 h-full w-96 bg-gray-800 text-white transform transition-all duration-300 z-50 
         ${open ? "translate-x-0" : "translate-x-full"}`}
       >
+        {/* ✅ Customer Details */}
+{order?.customer && (
+  <div className="p-4 border-b border-gray-700">
+    <h2 className="text-lg font-semibold">Customer Details</h2>
+
+    <p className="text-gray-300 mt-2">
+      <span className="font-medium text-white">Name:</span> {order.customer.name}
+    </p>
+
+    <p className="text-gray-300 mt-1">
+      <span className="font-medium text-white">Phone:</span> {order.customer.phone}
+    </p>
+  </div>
+)}
+
+
         {/* Header */}
         <div className="p-4 border-b border-gray-700 flex justify-between">
           <h2 className="text-lg font-semibold">
