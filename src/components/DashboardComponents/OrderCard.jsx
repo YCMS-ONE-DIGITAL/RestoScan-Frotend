@@ -16,6 +16,8 @@ export default function OrderCard({
   // ✅ Convert DB status into UI readable text
   const formatStatus = () => {
     switch (status) {
+       case "kot":
+        return "KOT";
       case "preparing":
         return "Preparing";
       case "served":
@@ -36,6 +38,13 @@ export default function OrderCard({
     Pending: {
       bg: "bg-gray-500/15",
       text: "text-gray-300",
+      border: "border-gray-500/30",
+      dot: "bg-gray-300",
+      ring: "ring-gray-500/20",
+    },
+    kot: {
+      bg: "bg-gray-500/15",
+      text: "text-green-300",
       border: "border-gray-500/30",
       dot: "bg-gray-300",
       ring: "ring-gray-500/20",

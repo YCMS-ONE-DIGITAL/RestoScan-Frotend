@@ -89,7 +89,16 @@ export default function OrderSidePanel({ order }) {
       const res = await api.post("/restaurant/orders/create", payload);
 
       alert("Order created successfully!");
-      console.log("ORDER RESPONSE:", res.data);
+       // ✅ CLEAR CART / RESET FORM
+    setOrderData({
+      items: [],
+      table_id: null,
+      table_no: null,
+      order_type: "dine_in",
+      customer_name: "",
+      customer_phone: "",
+    });
+      // console.log("ORDER RESPONSE:", res.data);
 
     } catch (err) {
       console.error(err);

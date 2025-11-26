@@ -9,25 +9,22 @@ export default function OrderSidePanelOrders({ open, onClose, order, onSave }) {
     payment_status: "",
     payment_method: "",
   });
-  const [deletedItems, setDeletedItems] = useState([]);
 
+  const [deletedItems, setDeletedItems] = useState([]);
 
   // Load order when clicked
   useEffect(() => {
     if (order) {
       setOrderData({
-  id: order.id,   // ⭐ VERY IMPORTANT
-  items: order.items || [],
-  table_id: order.table_id || null,
-  table_no: order.table?.table_no || "---",
-    customer: order.customer || null,  // ✅ add this
-
-  status: order.status || "",
-  payment_status: order.payment_status || "",
-  payment_method: order.payment_method || "",
-});
-console.log(order)
-
+        id: order.id,
+        items: order.items || [],
+        table_id: order.table_id || null,
+        table_no: order.table?.table_no || "---",
+        customer: order.customer || null,
+        status: order.status || "",
+        payment_status: order.payment_status || "",
+        payment_method: order.payment_method || "",
+      });
     }
   }, [order]);
 
@@ -67,20 +64,24 @@ console.log(order)
   };
 
   // Remove Item
-const removeItem = (id) => {
-  // remove from UI
-  setOrderData((prev) => ({
-    ...prev,
-    items: prev.items.filter((i) => i.id !== id),
-  }));
+  const removeItem = (id) => {
+    setOrderData((prev) => ({
+      ...prev,
+      items: prev.items.filter((i) => i.id !== id),
+    }));
 
-  // add to deleted list
-  setDeletedItems((prev) => [...prev, id]);
-};
+    setDeletedItems((prev) => [...prev, id]);
+  };
 
   // Save changes
   const handleSave = () => {
-  onSave(orderData, deletedItems);
+    onSave(orderData, deletedItems);
+  };
+
+  // ✅ Print / Download Bill
+  const handlePrintBill = () => {
+    if (!orderData.id) return;
+    window.open(`restaurant/orders/${orderData.id}/bill`, "_blank");
   };
 
   return (
@@ -97,20 +98,19 @@ const removeItem = (id) => {
         ${open ? "translate-x-0" : "translate-x-full"}`}
       >
         {/* ✅ Customer Details */}
-{order?.customer && (
-  <div className="p-4 border-b border-gray-700">
-    <h2 className="text-lg font-semibold">Customer Details</h2>
+        {order?.customer && (
+          <div className="p-4 border-b border-gray-700">
+            <h2 className="text-lg font-semibold">Customer Details</h2>
 
-    <p className="text-gray-300 mt-2">
-      <span className="font-medium text-white">Name:</span> {order.customer.name}
-    </p>
+            <p className="text-gray-300 mt-2">
+              <span className="font-medium text-white">Name:</span> {order.customer.name}
+            </p>
 
-    <p className="text-gray-300 mt-1">
-      <span className="font-medium text-white">Phone:</span> {order.customer.phone}
-    </p>
-  </div>
-)}
-
+            <p className="text-gray-300 mt-1">
+              <span className="font-medium text-white">Phone:</span> {order.customer.phone}
+            </p>
+          </div>
+        )}
 
         {/* Header */}
         <div className="p-4 border-b border-gray-700 flex justify-between">
@@ -124,58 +124,59 @@ const removeItem = (id) => {
           >
             ✕
           </button>
-
-          
         </div>
-{/* Order Status */}
-  <div className="px-3">
-    <label className="text-gray-300 text-sm">Order Status</label>
-    <select
-      className="w-full mt-1 p-2 bg-gray-700 rounded"
-      value={orderData.status}
-      onChange={(e) =>
-        setOrderData((prev) => ({ ...prev, status: e.target.value }))
-      }
-    >
-      <option value="pending">Pending</option>
-      <option value="preparing">Preparing</option>
-      <option value="served">Served</option>
-      <option value="completed">Completed</option>
-      <option value="cancelled">Cancelled</option>
-    </select>
-  </div>
 
-  {/* Payment Status */}
-  <div className="px-3"> 
-    <label className="text-gray-300 text-sm">Payment Status</label>
-    <select
-      className="w-full mt-1 p-2 bg-gray-700 rounded"
-      value={orderData.payment_status}
-      onChange={(e) =>
-        setOrderData((prev) => ({ ...prev, payment_status: e.target.value }))
-      }
-    >
-      <option value="pending">Pending</option>
-      <option value="paid">Paid</option>
-    </select>
-  </div>
+        {/* Order Status */}
+        <div className="px-3">
+          <label className="text-gray-300 text-sm">Order Status</label>
+          <select
+            className="w-full mt-1 p-2 bg-gray-700 rounded"
+            value={orderData.status}
+            onChange={(e) =>
+              setOrderData((prev) => ({ ...prev, status: e.target.value }))
+            }
+          >
+            <option value="pending">Pending</option>
+            <option value="kot">KOT</option>
+            <option value="preparing">Preparing</option>
+            <option value="served">Served</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
 
-  {/* Payment Method */}
-  <div className="px-3">
-    <label className="text-gray-300 text-sm">Payment Method</label>
-    <select
-      className="w-full mt-1 p-2 bg-gray-700 rounded"
-      value={orderData.payment_method}
-      onChange={(e) =>
-        setOrderData((prev) => ({ ...prev, payment_method: e.target.value }))
-      }
-    >
-      <option value="">Select</option>
-      <option value="cash">Cash</option>
-      <option value="upi">UPI</option>
-      <option value="card">Card</option>
-    </select>
-  </div>
+        {/* Payment Status */}
+        <div className="px-3">
+          <label className="text-gray-300 text-sm">Payment Status</label>
+          <select
+            className="w-full mt-1 p-2 bg-gray-700 rounded"
+            value={orderData.payment_status}
+            onChange={(e) =>
+              setOrderData((prev) => ({ ...prev, payment_status: e.target.value }))
+            }
+          >
+            <option value="pending">Pending</option>
+            <option value="paid">Paid</option>
+          </select>
+        </div>
+
+        {/* Payment Method */}
+        <div className="px-3">
+          <label className="text-gray-300 text-sm">Payment Method</label>
+          <select
+            className="w-full mt-1 p-2 bg-gray-700 rounded"
+            value={orderData.payment_method}
+            onChange={(e) =>
+              setOrderData((prev) => ({ ...prev, payment_method: e.target.value }))
+            }
+          >
+            <option value="">Select</option>
+            <option value="cash">Cash</option>
+            <option value="upi">UPI</option>
+            <option value="card">Card</option>
+          </select>
+        </div>
+
         {/* Items List */}
         <div className="p-4 ">
           <table className="w-full text-sm">
@@ -194,12 +195,12 @@ const removeItem = (id) => {
                 orderData.items.map((it) => (
                   <tr key={it.id} className="border-t border-gray-700">
                     <td className="p-2">
-                      {it.menu_item?.name || 
-   it.menuItem?.name || 
-   it.item?.name || 
-   it.name || 
-   "Unknown Item"}
-                      </td>
+                      {it.menu_item?.name ||
+                        it.menuItem?.name ||
+                        it.item?.name ||
+                        it.name ||
+                        "Unknown Item"}
+                    </td>
 
                     <td className="p-2 text-center">
                       <button onClick={() => updateQty(it.id, "dec")}>-</button>
@@ -246,8 +247,18 @@ const removeItem = (id) => {
             <span>₹{totals.total}</span>
           </div>
 
+          {/* ✅ Print / Download Bill Button */}
+          {["served", "completed"].includes(orderData.status) && (
+            <button
+              className="w-full bg-blue-600 mt-4 py-2 rounded hover:bg-blue-700"
+              onClick={handlePrintBill}
+            >
+              Print / Download Bill
+            </button>
+          )}
+
           <button
-            className="w-full bg-green-600 mt-4 py-2 rounded"
+            className="w-full bg-green-600 mt-2 py-2 rounded"
             onClick={handleSave}
           >
             SAVE CHANGES

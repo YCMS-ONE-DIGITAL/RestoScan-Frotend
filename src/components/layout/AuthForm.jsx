@@ -1,7 +1,7 @@
-import { useEffect,useState } from "react";
+import { useState } from "react";
 import { Eye, EyeOff, Mail, Phone } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import api from "../../api/api"; // <-- correct path
+import api from "../../api/api";
 
 export default function AuthForm() {
   const navigate = useNavigate();
@@ -12,7 +12,6 @@ export default function AuthForm() {
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
 
-
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -20,30 +19,15 @@ export default function AuthForm() {
     password: "",
   });
 
-// // 🔥 PREVENT showing login page if already logged in
-useEffect(() => {
-  api
-    .head("/user/me")
-    .then(() => navigate("/dashboard"))
-    .catch(() => {});
-}, []);
+  const handleChange = (e) =>
+    setFormData({ ...formData, [e.target.name]: e.target.value });
 
-
-
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-  setFormData({ ...formData, [name]: value });
-  };
-
-  // 🔹 LOGIN OR SEND OTP FOR SIGNUP
+  // ✅ LOGIN or SEND OTP
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
-    // ---------------- 🔵 LOGIN ----------------
     if (isLogin) {
-      setLoading(true);
-
       try {
         const res = await api.post("/user/login", {
           email: formData.email,
@@ -51,12 +35,9 @@ useEffect(() => {
         });
 
         if (res.data.status === "success") {
-          alert("Login Successful!");
-          navigate("/dashboard");
-        } else {
-          alert(res.data.message);
-        }
-      } catch (err) {
+          navigate("/dashboard"); // ✅ ProtectedRoutes will check restaurant
+        } else alert(res.data.message);
+      } catch {
         alert("Invalid email or password");
       }
 
@@ -64,10 +45,9 @@ useEffect(() => {
       return;
     }
 
-    // ---------------- 🔵 SIGNUP → SEND OTP ----------------
-    setLoading(true);
+    // ✅ SIGNUP → SEND OTP
     try {
-      const res = await api.post("otp/send", {
+      const res = await api.post("/otp/send", {
         name: formData.name,
         email: formData.email,
         phone_number: formData.phone,
@@ -75,11 +55,9 @@ useEffect(() => {
       });
 
       if (res.data.status === "success") {
-        alert("OTP sent to your email!");
         setIsOtpStage(true);
-      } else {
-        alert(res.data.message);
-      }
+      } else alert(res.data.message);
+
     } catch (err) {
       alert(err?.response?.data?.message || "Failed to send OTP");
     }
@@ -87,28 +65,23 @@ useEffect(() => {
     setLoading(false);
   };
 
-  // 🔹 VERIFY OTP
+  // ✅ VERIFY OTP
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     try {
       const res = await api.post("/otp/verify", {
-        name: formData.name,
-        email: formData.email,
+        ...formData,
         phone_number: formData.phone,
-        password: formData.password,
-        otp: otp,
+        otp,
       });
 
       if (res.data.status === "success") {
-        alert("Signup Successful!");
         navigate("/dashboard");
-      } else {
-        alert(res.data.message);
-      }
-    } catch (err) {
-      alert(err?.response?.data?.message || "Error verifying OTP");
+      } else alert(res.data.message);
+    } catch {
+      alert("Invalid OTP");
     }
 
     setLoading(false);
@@ -122,11 +95,10 @@ useEffect(() => {
           {isOtpStage ? "Verify OTP" : isLogin ? "Sign In" : "Create Account"}
         </h2>
 
-        {/* ------------------- STEP 1 FORM ------------------- */}
+        {/* STEP 1 — login/signup */}
         {!isOtpStage && (
           <form onSubmit={handleSubmit} className="space-y-5">
 
-            {/* Name */}
             {!isLogin && (
               <div>
                 <label className="block mb-1 font-medium">Full Name</label>
@@ -140,7 +112,6 @@ useEffect(() => {
               </div>
             )}
 
-            {/* Email */}
             <div>
               <label className="block mb-1 font-medium">Email</label>
               <div className="relative">
@@ -156,7 +127,6 @@ useEffect(() => {
               </div>
             </div>
 
-            {/* Phone */}
             {!isLogin && (
               <div>
                 <label className="block mb-1 font-medium">Phone Number</label>
@@ -173,7 +143,6 @@ useEffect(() => {
               </div>
             )}
 
-            {/* Password */}
             <div>
               <label className="block mb-1 font-medium">Password</label>
               <div className="relative">
@@ -195,7 +164,6 @@ useEffect(() => {
               </div>
             </div>
 
-            {/* Submit */}
             <button
               type="submit"
               disabled={loading}
@@ -204,7 +172,6 @@ useEffect(() => {
               {loading ? "Please Wait..." : isLogin ? "Sign In" : "Sign Up"}
             </button>
 
-            {/* Toggle Login/Signup */}
             <p className="text-center text-sm">
               {isLogin ? "Don't have an account?" : "Already have an account?"}
               <button
@@ -219,11 +186,11 @@ useEffect(() => {
           </form>
         )}
 
-        {/* ------------------- STEP 2 - OTP ------------------- */}
+        {/* STEP 2 — OTP */}
         {isOtpStage && (
           <form onSubmit={handleVerifyOtp} className="space-y-5 text-center">
             <p className="text-gray-600 text-sm">
-              Enter the 6-digit OTP sent to <br />
+              Enter the OTP sent to <br />
               <span className="text-blue-600 font-medium">{formData.email}</span>
             </p>
 

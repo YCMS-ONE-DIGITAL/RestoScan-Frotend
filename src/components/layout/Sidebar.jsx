@@ -72,7 +72,7 @@ export default function Sidebar({ onNavigate }) {
   };
 
   return (
-    <aside className="w-64 bg-[#121826] text-white h-full p-4 flex flex-col">
+<aside className="w-full bg-[#121826] text-white h-screen overflow-y-auto p-4 flex flex-col">
       {/* ✅ Restaurant Name Section */}
       <div className="flex items-center gap-2 mb-8">
         <div className="bg-indigo-500 text-white w-8 h-8 flex items-center justify-center rounded-md font-bold uppercase">

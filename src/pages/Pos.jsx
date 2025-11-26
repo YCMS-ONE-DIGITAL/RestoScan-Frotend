@@ -18,7 +18,7 @@ const POS = () => {
   const { data: restaurant } = useQuery({
     queryKey: ["restaurant"],
     queryFn: async () => {
-      const res = await api.get("/restaurant");
+      const res = await api.get("/restaurant/show");
       return res.data.restaurant;
     },
   });
@@ -80,12 +80,18 @@ const POS = () => {
       {/* ✅ ORDER PANEL */}
       <div className="w-[380px] border-l border-gray-700">
         <OrderSidePanel
-          order={{
-            items: cartItems,
-            table_id: selectedTable,
-            table_no: selectedTableNumber,
-            orderNo: "New",
-          }}
+        order={{
+  id: null,
+  items: cartItems,
+  table_id: selectedTable,
+  table_no: selectedTableNumber,
+  customer: null,
+  order_type: "dine_in",
+  status: "pending",
+  payment_status: "pending",
+  payment_method: "",
+}}
+
         />
       </div>
     </div>

@@ -31,7 +31,7 @@ export default function MenuItemsList() {
   const { data: restaurant } = useQuery({
     queryKey: ["restaurant-info"],
     queryFn: async () => {
-      const res = await api.get("/restaurant");
+      const res = await api.get("/restaurant/show");
       return res.data.restaurant;
     },
   });

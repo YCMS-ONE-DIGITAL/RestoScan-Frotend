@@ -61,11 +61,13 @@ export default function KOT() {
     });
   };
 
-  // ✅ Apply status filter locally
-  const displayedOrders = orders.filter((o) => {
-    if (!statusFilter) return true;
-    return o.status === statusFilter;
-  });
+  // ✅ Hide pending orders + apply filter
+  const displayedOrders = orders
+    .filter((o) => o.status !== "pending") // ✅ remove pending
+    .filter((o) => {
+      if (!statusFilter) return true;
+      return o.status === statusFilter;
+    });
 
   return (
     <div className="p-4 bg-gray dark:bg-gray-800 dark:border-gray-700">
@@ -127,9 +129,19 @@ export default function KOT() {
             statusFilter === "" ? "bg-orange-600 text-white" : "bg-gray-800 text-gray-300"
           }`}
         >
-          All ({orders.length})
+          All ({orders.filter(o => o.status !== "pending").length})
         </button>
 
+          
+
+        <button
+          onClick={() => setStatusFilter("kot")}
+          className={`px-3 py-1 rounded-md border ${
+            statusFilter === "kot" ? "bg-orange-600 text-white" : "bg-gray-800 text-gray-300"
+          }`}
+        >
+          kot({orders.filter(o => o.status === "kot").length})
+        </button>
         <button
           onClick={() => setStatusFilter("preparing")}
           className={`px-3 py-1 rounded-md border ${
@@ -138,6 +150,7 @@ export default function KOT() {
         >
           In Kitchen ({orders.filter(o => o.status === "preparing").length})
         </button>
+        
 
         <button
           onClick={() => setStatusFilter("served")}
@@ -145,7 +158,7 @@ export default function KOT() {
             statusFilter === "served" ? "bg-orange-600 text-white" : "bg-gray-800 text-gray-300"
           }`}
         >
-          Ready ({orders.filter(o => o.status === "served").length})
+          Served ({orders.filter(o => o.status === "served").length})
         </button>
 
         <button
@@ -154,7 +167,7 @@ export default function KOT() {
             statusFilter === "completed" ? "bg-orange-600 text-white" : "bg-gray-800 text-gray-300"
           }`}
         >
-          Served ({orders.filter(o => o.status === "completed").length})
+          Completed ({orders.filter(o => o.status === "completed").length})
         </button>
       </div>
 
@@ -168,6 +181,7 @@ export default function KOT() {
               key={order.id}
               table={order.table?.table_no ?? "N/A"}
               orderNo={order.id}
+              orderType={order.order_type}
               status={order.status}
               paymentStatus={order.payment_status}
               time={new Date(order.created_at).toLocaleString()}

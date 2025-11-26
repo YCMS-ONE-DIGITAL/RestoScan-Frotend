@@ -25,7 +25,7 @@ export default function TableList() {
   const { data: restaurant } = useQuery({
     queryKey: ["restaurant"],
     queryFn: async () => {
-      const res = await api.get("/restaurant");
+      const res = await api.get("/restaurant/show");
       return res.data.restaurant;
     },
   });
@@ -95,13 +95,14 @@ export default function TableList() {
                   Delete
                 </Button>
 
-                <Button
-                  size="sm"
-                  className="bg-blue-600"
-                  onClick={() => setSelectedTableForQR(table)}
-                >
-                  QR Code
-                </Button>
+              <Button
+  size="sm"
+  className="bg-indigo-600 hover:bg-indigo-700"
+  onClick={() => restaurant && setSelectedTableForQR(table)}
+  disabled={!restaurant}
+>
+  QR Code
+</Button>
               </CardFooter>
             </Card>
           ))}

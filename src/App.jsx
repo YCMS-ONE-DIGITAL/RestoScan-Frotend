@@ -23,6 +23,9 @@ import Settings from "./pages/Settings";
 import CustomerWebsite from "./CustomerWebsite/Main";
 import MenuPage from "./CustomerWebsite/pages/MenuPage";
 import OrderHistory from "./CustomerWebsite/pages/OrderHistory";
+import PublicRoute from "./components/PublicRoute";
+import ProtectedRoutes from "./components/ProtectedRoutes";
+import AddRestaurant from "./pages/AddRestaurant";
 
 const allPageRouter = createBrowserRouter([
   // ===========================
@@ -50,19 +53,33 @@ const allPageRouter = createBrowserRouter([
   },
   {
     path: "/signup",
-    element: <AuthForm />,
+    element: <PublicRoute>
+      <AuthForm />
+    </PublicRoute>,
   },
   {
     path: "/login",
-    element: <AuthForm />,
+    element: <PublicRoute>
+      <AuthForm />
+    </PublicRoute>,
   },
 
   // ===========================
   // Dashboard (Main Layout)
   // ===========================
   {
+  path: "/add-restaurant",
+  element: (
+    <ProtectedRoutes blockIfRestaurantExists={true}>
+      <AddRestaurant />
+    </ProtectedRoutes>
+  ),
+},
+  {
     path: "/",
-    element: <DashboardLayout />,
+    element:  <ProtectedRoutes requireRestaurant={true}>
+      <DashboardLayout />
+    </ProtectedRoutes>,
     children: [
       { index: true, element: <Dashboard /> }, // default route
       { path: "dashboard", element: <Dashboard /> },

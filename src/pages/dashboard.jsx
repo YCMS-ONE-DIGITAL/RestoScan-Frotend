@@ -19,7 +19,7 @@ export default function Dashboard() {
     queryKey: ["dashboardStats"],
     queryFn: async () => {
       const res = await api.get("/restaurant/dashboard/stats");
-      //   console.log(res.data)
+      console.log("Dashboard Stats:", res.data);
       return res.data;
     },
     refetchInterval: 7000,
@@ -28,8 +28,6 @@ export default function Dashboard() {
   const raw = data ?? {};
   const stats = raw.data ?? raw;
   const orders = stats.orders ?? [];
-
-
 
   // ✅ Update Order
   const updateOrder = useMutation({
@@ -105,44 +103,47 @@ export default function Dashboard() {
         </div>
 
         {/* ✅ RIGHT - Today Orders List */}
-<div className="p-4 flex flex-col gap-3 max-h-[85vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-gray-900/20">
-        <div className="p-4 flex flex-col gap-3">
-          <h1 className="text-xl font-semibold dark:text-white mb-4">
-            Today Orders
-          </h1>
+        <div className="p-4 flex flex-col gap-3 max-h-[85vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-gray-900/20">
+          <div className="p-4 flex flex-col gap-3">
+            <h1 className="text-xl font-semibold dark:text-white mb-4">
+              Today Orders
+            </h1>
 
-          {isLoading ? (
-            <p className="text-gray-400">Loading orders...</p>
-          ) : orders.length > 0 ? (
-            orders.map(order => (
-              <OrderCard
-                key={order.id}
-                table={order.table?.table_no ?? "N/A"}
-                orderNo={order.id}
-                status={order.status}
-                paymentStatus={order.payment_status}
-                time={new Date(order.created_at).toLocaleString()}
-                items={`${order.items?.length ?? 0} Item(s)`}
-                total={order.total_amount}
-                onClick={() => {
-                  setSelectedOrder(order);
-                  setOpenPanel(true);
-                }}
-              />
-            ))
-          ) : (
-            <p className="text-gray-400">No orders today</p>
-          )}
-
-
+            {isLoading ? (
+              <p className="text-gray-400">Loading orders...</p>
+            ) : orders.length > 0 ? (
+              orders.map((order) => (
+                <OrderCard
+                  key={order.id}
+                  table={order.table?.table_no ?? "N/A"}
+                  orderNo={order.id}
+                  status={order.status}
+                  paymentStatus={order.payment_status}
+                  time={new Date(order.created_at).toLocaleString()}
+                  items={`${order.items?.length ?? 0} Item(s)`}
+                  total={order.total_amount}
+                  customer={order.customer}
+                  orderType={order.order_type ?? ""} // ✅ FIX — now passed!
+                  onClick={() => {
+                    setSelectedOrder(order);
+                    setOpenPanel(true);
+                  }}
+                />
+              ))
+            ) : (
+              <p className="text-gray-400">No orders today</p>
+            )}
+          </div>
         </div>
-      </div>
       </div>
 
       {/* ✅ EDIT PANEL */}
       <OrderSidePanelOrders
         open={openPanel}
-        onClose={() => setOpenPanel(false)}
+        onClose={() => {
+          setOpenPanel(false);
+          setSelectedOrder(null);
+        }}
         order={selectedOrder}
         onSave={handleSaveOrder}
       />
