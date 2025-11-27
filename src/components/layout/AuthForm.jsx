@@ -15,18 +15,19 @@ export default function AuthForm() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    phone: "",
+    phone_number: "",   // ⭐ fixed key
     password: "",
   });
 
   const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
 
-  // ✅ LOGIN or SEND OTP
+  // ⭐ LOGIN OR SEND OTP
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
+    // ⭐ LOGIN
     if (isLogin) {
       try {
         const res = await api.post("/user/login", {
@@ -35,8 +36,10 @@ export default function AuthForm() {
         });
 
         if (res.data.status === "success") {
-          navigate("/dashboard"); // ✅ ProtectedRoutes will check restaurant
-        } else alert(res.data.message);
+          navigate("/dashboard");
+        } else {
+          alert(res.data.message);
+        }
       } catch {
         alert("Invalid email or password");
       }
@@ -45,19 +48,29 @@ export default function AuthForm() {
       return;
     }
 
-    // ✅ SIGNUP → SEND OTP
+    // ⭐ SIGNUP → SEND OTP
     try {
+
+       console.log("OTP SEND PAYLOAD:", {
+    name: formData.name,
+    email: formData.email,
+    phone_number: formData.phone_number,
+    password: formData.password,
+  });
+  
       const res = await api.post("/otp/send", {
         name: formData.name,
         email: formData.email,
-        phone_number: formData.phone,
+        phone_number: formData.phone_number,  // ⭐ correct key
         password: formData.password,
       });
+      console.log(res)
 
       if (res.data.status === "success") {
         setIsOtpStage(true);
-      } else alert(res.data.message);
-
+      } else {
+        alert(res.data.message);
+      }
     } catch (err) {
       alert(err?.response?.data?.message || "Failed to send OTP");
     }
@@ -65,21 +78,25 @@ export default function AuthForm() {
     setLoading(false);
   };
 
-  // ✅ VERIFY OTP
+  // ⭐ OTP VERIFY
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     try {
       const res = await api.post("/otp/verify", {
-        ...formData,
-        phone_number: formData.phone,
+        name: formData.name,
+        email: formData.email,
+        phone_number: formData.phone_number, // ⭐ correct key
+        password: formData.password,
         otp,
       });
 
       if (res.data.status === "success") {
         navigate("/dashboard");
-      } else alert(res.data.message);
+      } else {
+        alert(res.data.message);
+      }
     } catch {
       alert("Invalid OTP");
     }
@@ -88,14 +105,14 @@ export default function AuthForm() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100 transition-all">
+    <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md space-y-6">
 
         <h2 className="text-2xl font-bold text-center text-gray-800">
           {isOtpStage ? "Verify OTP" : isLogin ? "Sign In" : "Create Account"}
         </h2>
 
-        {/* STEP 1 — login/signup */}
+        {/* STEP 1 — Login / Signup */}
         {!isOtpStage && (
           <form onSubmit={handleSubmit} className="space-y-5">
 
@@ -133,8 +150,8 @@ export default function AuthForm() {
                 <div className="relative">
                   <Phone className="absolute left-3 top-3 text-gray-400" size={18} />
                   <input
-                    name="phone"
-                    value={formData.phone}
+                    name="phone_number"               // ⭐ fixed
+                    value={formData.phone_number}     // ⭐ fixed
                     onChange={handleChange}
                     className="w-full border border-gray-300 rounded-lg pl-10 p-2"
                     required
@@ -186,7 +203,7 @@ export default function AuthForm() {
           </form>
         )}
 
-        {/* STEP 2 — OTP */}
+        {/* STEP 2 — OTP Verify */}
         {isOtpStage && (
           <form onSubmit={handleVerifyOtp} className="space-y-5 text-center">
             <p className="text-gray-600 text-sm">

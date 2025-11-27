@@ -11,11 +11,13 @@ import {
 import { useNavigate, useLocation } from "react-router-dom";
 import { useCart } from "../context/CardContext";
 import api from "@/api/api";
+import { encryptData } from "@/utils/encryption";
+
 
 import UserDetailsWithOtpModal from "../Components/UserDetailsModal"; // ✅ IMPORT MODAL
 
-export default function Footer({restaurantId,
-    tableNo,tableId}) {
+export default function Footer({ restaurantId,
+  tableNo, tableId }) {
   const {
     cartItems,
     cartCount,
@@ -69,52 +71,74 @@ export default function Footer({restaurantId,
   };
 
   // ✅ Verify OTP
+  // ✅ Verify OTP
   const handleVerifyOtp = async () => {
-  if (otp !== "1234") {
-    setErrors({ otp: "Invalid OTP" });
-    return;
-  }
+    if (otp !== "1234") {
+      setErrors({ otp: "Invalid OTP" });
+      return;
+    }
 
-  const params = new URLSearchParams(window.location.search);
-  const token = params.get("token");
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
 
-  if (!token) {
-    alert("Token missing!");
-    return;
-  }
+    if (!token) {
+      alert("Token missing!");
+      return;
+    }
 
-  // ⭐ VALIDATION
-  if (!restaurantId || !tableNo) {
-    alert("Something went wrong. Table/Restaurant missing.");
-    return;
-  }
+    if (!restaurantId || !tableId) {
+      alert("Something went wrong. Table/Restaurant missing.");
+      return;
+    }
 
-  try {
-    // ⭐ PREPARE PAYLOAD
-   const payload = {
-  restaurant_id: Number(restaurantId),
-  table_id: Number(tableId),
-  name,        
-  phone,       
-  items: cartItems.map(item => ({
-    menu_item_id: item.id,
-    quantity: item.quantity
-  }))
-};
+    try {
+      const payload = {
+        restaurant_id: Number(restaurantId),
+        table_id: Number(tableId),
+        name,
+        phone,
+        items: cartItems.map((item) => ({
+          menu_item_id: item.id,
+          quantity: item.quantity,
+        })),
+      };
 
-  
-    // ⭐ CALL ORDER CREATE API
-const res = await api.post("/public/order/create", payload);
+      await api.post("/public/order/create", payload);
 
-    // console.log("ORDER SUCCESS:",payload);
+      // ✅ CLEAR CART
+      clearCart();
 
-    // ⭐ Navigate to order history
-    navigate(`/customerwebsite/orderhistory?token=${token}`);
-  } catch (err) {
-    console.error("ORDER ERROR:", err);
-    alert("Order creation failed");
-  }
-};
+      // ✅ RESET USER FORM
+      setName("");
+      setPhone("");
+      setOtp("");
+      setOtpSent(false);
+      setErrors({});
+      setIsUserModalOpen(false);
+
+      // ✅ Generate updated token with phone
+
+      const newToken = btoa(
+        encryptData({
+          restaurant_id: Number(restaurantId),
+          phone, // ✅ important for history
+    //          restaurant_name: restaurant.name,
+    // table_no: table.number,   // only for dine-in
+    // table_id: table.id,
+        })
+      );
+
+      navigate(`/customerwebsite/orderhistory?token=${newToken}`);
+
+
+      // ✅ Redirect with updated token
+      navigate(`/customerwebsite/orderhistory?token=${newToken}`);
+    } catch (err) {
+      console.error("ORDER ERROR:", err);
+      alert("Order creation failed");
+    }
+  };
+
 
 
 
@@ -124,14 +148,13 @@ const res = await api.post("/public/order/create", payload);
       <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40">
         <div className="flex justify-around text-xs py-2">
           <button
-            onClick={() =>{
+            onClick={() => {
               const params = new URLSearchParams(window.location.search);
-  const token = params.get("token");
-    navigate(`/customerwebsite?token=${token}`);
+              const token = params.get("token");
+              navigate(`/customerwebsite?token=${token}`);
             }}
-            className={`flex flex-col items-center ${
-              isActive("/customerwebsite") ? "text-orange-600" : "text-gray-500"
-            }`}
+            className={`flex flex-col items-center ${isActive("/customerwebsite") ? "text-orange-600" : "text-gray-500"
+              }`}
           >
             <Home className="w-5 h-5" />
             <span>Home</span>
@@ -140,12 +163,11 @@ const res = await api.post("/public/order/create", payload);
           <button
             onClick={() => {
               const params = new URLSearchParams(window.location.search);
-  const token = params.get("token");
-    navigate(`/customerwebsite/menu?token=${token}`);
+              const token = params.get("token");
+              navigate(`/customerwebsite/menu?token=${token}`);
             }}
-            className={`flex flex-col items-center ${
-              isActive("/customerwebsite/menu") ? "text-orange-600" : "text-gray-500"
-            }`}
+            className={`flex flex-col items-center ${isActive("/customerwebsite/menu") ? "text-orange-600" : "text-gray-500"
+              }`}
           >
             <Menu className="w-5 h-5" />
             <span>Menu</span>
@@ -154,14 +176,13 @@ const res = await api.post("/public/order/create", payload);
           <button
             onClick={() => {
               const params = new URLSearchParams(window.location.search);
-  const token = params.get("token");
-    navigate(`/customerwebsite/orderhistory?token=${token}`);
+              const token = params.get("token");
+              navigate(`/customerwebsite/orderhistory?token=${token}`);
             }}
-            className={`flex flex-col items-center ${
-              isActive("/customerwebsite/orderhistory")
+            className={`flex flex-col items-center ${isActive("/customerwebsite/orderhistory")
                 ? "text-orange-600"
                 : "text-gray-500"
-            }`}
+              }`}
           >
             <Receipt className="w-5 h-5" />
             <span>Orders</span>
@@ -220,26 +241,55 @@ const res = await api.post("/public/order/create", payload);
               ) : (
                 cartItems.map((item) => (
                   <div key={item.id} className="bg-gray-50 p-4 rounded-xl border mb-3">
-                    <div className="flex justify-between items-center mb-2">
-                      <p className="font-medium">{item.name}</p>
-                      <div className="flex items-center gap-1 bg-white border px-2 py-1 rounded-full">
-                        <button onClick={() => removeFromCart(item.id)}>
-                          <Minus className="w-4 h-4 text-red-500" />
-                        </button>
-                        <span className="text-sm font-bold">{item.quantity}</span>
-                        <button onClick={() => addToCart(item)}>
-                          <Plus className="w-4 h-4 text-green-500" />
-                        </button>
-                      </div>
-                    </div>
-                    <input
-                      type="text"
-                      placeholder="Add note..."
-                      value={notes[item.id] || ""}
-                      onChange={(e) => handleNoteChange(item.id, e.target.value)}
-                      className="w-full px-3 py-2 border rounded-lg text-sm"
-                    />
-                  </div>
+  <div className="flex justify-between items-start mb-2">
+    
+    {/* ✅ Veg / Non-Veg + Name + Price */}
+    <div>
+      <div className="flex items-center gap-2">
+        {item.type === "veg" ? (
+          <span className="w-3 h-3 rounded-sm border border-green-600 flex items-center justify-center">
+            <span className="w-2 h-2 rounded-sm bg-green-600" />
+          </span>
+        ) : (
+          <span className="w-3 h-3 rounded-sm border border-red-600 flex items-center justify-center">
+            <span className="w-2 h-2 rounded-sm bg-red-600" />
+          </span>
+        )}
+        <p className="font-medium text-gray-800">{item.name}</p>
+      </div>
+
+      {/* ✅ Price per item */}
+      <p className="text-xs text-gray-600 mt-1">₹{item.price}</p>
+    </div>
+
+    {/* ✅ Quantity Controller */}
+    <div className="flex items-center gap-1 bg-white border px-2 py-1 rounded-full">
+      <button onClick={() => removeFromCart(item.id)}>
+        <Minus className="w-4 h-4 text-red-500" />
+      </button>
+      <span className="text-sm font-bold">{item.quantity}</span>
+      <button onClick={() => addToCart(item)}>
+        <Plus className="w-4 h-4 text-green-500" />
+      </button>
+    </div>
+  </div>
+
+  {/* ✅ Line Total */}
+  <div className="flex justify-between text-sm font-semibold text-gray-800 mb-2">
+    <span>Total</span>
+    <span>₹{item.price * item.quantity}</span>
+  </div>
+
+  {/* ✅ Notes */}
+  <input
+    type="text"
+    placeholder="Add note..."
+    value={notes[item.id] || ""}
+    onChange={(e) => handleNoteChange(item.id, e.target.value)}
+    className="w-full px-3 py-2 border rounded-lg text-sm"
+  />
+</div>
+
                 ))
               )}
             </div>

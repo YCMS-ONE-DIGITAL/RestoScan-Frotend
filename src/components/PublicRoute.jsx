@@ -7,26 +7,19 @@ export default function PublicRoute({ children }) {
   const [auth, setAuth] = useState(false);
 
   useEffect(() => {
-    // ✅ Check if cookie contains token before calling API
-    const hasToken = document.cookie.includes("auth_token");
-
-    if (!hasToken) {
-      setAuth(false);
-      setLoading(false);
-      return;
-    }
-
-    // ✅ Token exists → verify silently
-    api
-      .head("/user/me", { validateStatus: () => true })
-      .then((res) => setAuth(res.status === 200))
-      .catch(() => setAuth(false))
+    api.get("/user/me")
+      .then(() => {
+        setAuth(true);     // ✔ user logged in
+      })
+      .catch(() => {
+        setAuth(false);    // ❌ not logged in
+      })
       .finally(() => setLoading(false));
   }, []);
 
   if (loading) return <div className="mt-20 text-center">Loading...</div>;
 
-  // ✅ logged-in users cannot visit login/signup
+  // ⭐ logged-in user should NOT see login/signup
   if (auth) return <Navigate to="/dashboard" replace />;
 
   return children;

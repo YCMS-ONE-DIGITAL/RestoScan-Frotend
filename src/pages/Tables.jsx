@@ -65,9 +65,9 @@ export default function TableList() {
             <Card key={table.id} className="bg-gray-800 text-white">
               <CardHeader className="flex justify-between">
                 <CardTitle>Table {table.table_no}</CardTitle>
-                <span className="px-2 py-1 text-xs rounded-full bg-green-500/20 text-green-400">
+                {/* <span className="px-2 py-1 text-xs rounded-full bg-green-500/20 text-green-400">
                   Available
-                </span>
+                </span> */}
               </CardHeader>
 
               <CardContent>

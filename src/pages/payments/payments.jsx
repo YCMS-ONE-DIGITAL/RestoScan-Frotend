@@ -1,84 +1,165 @@
-import React from 'react'
+import React, { useEffect, useState } from "react";
+import api from "@/api/api";
 import {
   Table,
   TableHeader,
   TableBody,
-  TableFooter,
   TableRow,
   TableHead,
   TableCell,
-  TableCaption,
 } from "@/components/ui/table";
 
-const payments = () => {
-    
-  const staffData = [
-  { id: 1, name: "John Doe", email: "john@example.com", role: "Manager", joined: "12 Jan 2023" },
-  { id: 2, name: "Jane Smith", email: "jane@example.com", role: "Staff", joined: "25 Feb 2024" },
-  ]
+export default function Payments() {
+  const [payments, setPayments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState("paid");
+
+  // 🔥 Status Badge Component
+  const StatusBadge = ({ status }) => {
+    const isPaid = status === "paid";
+    return (
+      <span
+        className={`px-3 py-1 text-xs font-semibold rounded-full
+          ${isPaid ? "bg-green-600/20 text-green-400" : "bg-red-600/20 text-red-400"}
+        `}
+      >
+        {isPaid ? "Paid" : "Pending"}
+      </span>
+    );
+  };
+
+  useEffect(() => {
+    api
+      .get("restaurant/paymenthistory")
+      .then((res) => {
+        setPayments(res.data.payments);
+      })
+      .catch((err) => {
+        console.error("Failed to fetch payments", err);
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return <div className="text-white text-center mt-10">Loading...</div>;
+  }
+
+  // 🔥 Apply Filter
+  const filteredPayments = payments.filter((p) => {
+    if (filter === "paid") return p.payment_status === "paid";
+    if (filter === "pending") return p.payment_status === "pending";
+    return true;
+  });
+
+  // 🔥 CSV Export
+  const downloadCSV = (payments) => {
+    if (!payments || payments.length === 0) {
+      alert("No payments found!");
+      return;
+    }
+
+    const header = ["Order ID", "Amount", "Payment Method", "Date & Time"];
+    const rows = payments.map((p) => [
+      `#${p.id}`,
+      p.total_amount,
+      p.payment_method || "-",
+      new Date(p.created_at).toLocaleString(),
+    ]);
+
+    const csvContent =
+      "data:text/csv;charset=utf-8," +
+      [header, ...rows].map((row) => row.join(",")).join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "payments.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
- <div className=" ">
+    <div>
+      {/* Header */}
+      <div className="mb-6 flex flex-col sm:flex-row items-center justify-between">
+        <h1 className="text-xl font-semibold text-white">Payments</h1>
 
-        {/* Header Section */}
-        <div className="mb-6 flex flex-col sm:flex-row items-center justify-between">
-          <h1 className="text-xl font-semibold text-white-500 dark:text-white">Payments</h1>
+        <div className="flex gap-3">
+          <button
+            onClick={() => setFilter("paid")}
+            className={`px-4 py-2 rounded-lg text-sm ${
+              filter === "paid" ? "bg-blue-600 text-white" : "bg-gray-700 text-gray-300"
+            }`}
+          >
+            Paid
+          </button>
 
-          {/* Search + Buttons */}
-          <div className="flex items-center gap-4 mt-4 sm:mt-0">
-            {/* Search */}
-            <div className="relative">
-              <span className="absolute inset-y-0 left-3 flex items-center">
-                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1010.5 18a7.5 7.5 0 005.15-1.35z" />
-                </svg>
-              </span>
-              <input
-                className="w-64 sm:w-72 lg:w-96 pl-10 pr-4 py-2 text-sm bg-gray-900 dark:bg-gray-700 text-gray-900 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-skin-base focus:border-skin-base"
-                placeholder="Search by name or email"
-              />
-            </div>
-
-            {/* Export */}
-            <button className="px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-gray-600">
-              Export
-            </button>
-
-           
-          </div>
+          <button
+            onClick={() => setFilter("pending")}
+            className={`px-4 py-2 rounded-lg text-sm ${
+              filter === "pending" ? "bg-blue-600 text-white" : "bg-gray-700 text-gray-300"
+            }`}
+          >
+            Pending
+          </button>
         </div>
 
-        {/* Table Section */}
-        <div className="overflow-x-auto">
-          <Table className="min-w-full border border-gray-200  rounded-lg">
-            <TableHeader className="bg-gray-800 dark:bg-gray-700">
-                <TableRow>
-                              <TableHead className="text-gray-300 dark:text-gray-300">Amount</TableHead>
-                              <TableHead className="text-gray-300 dark:text-gray-300">Payment Method</TableHead>
-                              <TableHead className="text-gray-300 dark:text-gray-300">Order</TableHead>
-                              <TableHead className="text-gray-300 dark:text-gray-300">	Date & Time</TableHead>
-                              <TableHead className="text-right text-gray-300 dark:text-gray-300">Action</TableHead>
-                              </TableRow>
-            </TableHeader>
+        <div className="flex items-center gap-4 mt-4 sm:mt-0">
+          <input
+            className="w-72 bg-gray-900 text-gray-200 border border-gray-700 rounded-lg px-4 py-2"
+            placeholder="Search payments..."
+          />
 
-           <TableBody>
-  {staffData.map((staff) => (
-    <TableRow key={staff.id}>
-      <TableCell className="text-gray-300 dark:text-gray-200">{staff.name}</TableCell>
-      <TableCell className="text-gray-300 dark:text-gray-200">{staff.email}</TableCell>
-      <TableCell className="text-gray-300 dark:text-gray-200">{staff.role}</TableCell>
-      <TableCell className="text-gray-300 dark:text-gray-200">{staff.joined}</TableCell>
-
-      <TableCell className="text-right">
-        <button className="text-skin-base hover:underline">Edit</button>
-      </TableCell>
-    </TableRow>
-  ))}
-</TableBody>
-
-          </Table>
+          <button
+            onClick={() => downloadCSV(payments)}
+            className="px-3 py-2 bg-gray-700 text-gray-300 border border-gray-600 rounded-lg text-sm"
+          >
+            Export
+          </button>
         </div>
-      </div>  )
+      </div>
+
+      {/* Table */}
+      <div className="overflow-x-auto">
+        <Table className="min-w-full border border-gray-700 rounded-lg">
+          <TableHeader className="bg-gray-800">
+            <TableRow>
+              <TableHead className="text-gray-300">Amount</TableHead>
+              <TableHead className="text-gray-300">Payment Method</TableHead>
+              <TableHead className="text-gray-300">Status</TableHead>
+              <TableHead className="text-gray-300">Order</TableHead>
+              <TableHead className="text-gray-300">Date & Time</TableHead>
+              <TableHead className="text-right text-gray-300">Action</TableHead>
+            </TableRow>
+          </TableHeader>
+
+          <TableBody>
+            {filteredPayments.map((p) => (
+              <TableRow key={p.id}>
+                <TableCell className="text-gray-200">₹{p.total_amount}</TableCell>
+                <TableCell className="text-gray-200">{p.payment_method || "-"}</TableCell>
+
+                {/* 🔥 STATUS BADGE */}
+                <TableCell>
+                  <StatusBadge status={p.payment_status} />
+                </TableCell>
+
+                <TableCell className="text-gray-200">#{p.id}</TableCell>
+                <TableCell className="text-gray-200">
+                  {new Date(p.created_at).toLocaleString()}
+                </TableCell>
+
+                <TableCell className="text-right">
+                  <button className="text-blue-400 hover:underline">View</button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
+  );
 }
-
-export default payments

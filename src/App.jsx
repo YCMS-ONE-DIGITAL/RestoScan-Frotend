@@ -53,9 +53,8 @@ const allPageRouter = createBrowserRouter([
   },
   {
     path: "/signup",
-    element: <PublicRoute>
+    element: 
       <AuthForm />
-    </PublicRoute>,
   },
   {
     path: "/login",
@@ -96,7 +95,6 @@ const allPageRouter = createBrowserRouter([
       { path: "staff", element: <Staff /> },
       { path: "customers", element: <Customers /> },
       { path: "payments", element: <Payments /> },
-      { path: "payments/paymentdue", element: <PaymentDue /> },
       { path: "pos", element: <POS /> },
       { path: "settings", element: <Settings /> },
     ],

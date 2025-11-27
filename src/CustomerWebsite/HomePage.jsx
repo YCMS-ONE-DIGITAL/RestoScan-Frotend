@@ -1,20 +1,45 @@
 import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+
 import { motion } from "framer-motion";
 import { ChefHat, ArrowRight } from "lucide-react";
 
+// import { useCart } from "../context/CardContext";
+import api from "@/api/api";
+import { decryptData } from "@/utils/encryption";
 export default function HomePage() {
   const navigate = useNavigate();
+    const [restaurantName, setRestaurantName] = useState(""); // ✅ NEW
+  
+
+  // Decode Token
+    useEffect(() => {
+      const params = new URLSearchParams(window.location.search);
+      const baseToken = params.get("token");
+  
+      if (!baseToken) {
+        return;
+      }
+  
+      try {
+        const decrypted = decryptData(atob(baseToken));
+        if (decrypted?.restaurant_name) setRestaurantName(decrypted.restaurant_name); // ✅ NEW
+      } catch {
+        console.error("Invalid token");
+      } finally {
+      }
+    }, []);
 
   return (
     <div className="relative min-h-screen flex flex-col overflow-hidden bg-gradient-to-br from-slate-900 via-black to-slate-900">
-      
+
       {/* ===== Fast Parallax Background ===== */}
       <motion.div
         initial={{ scale: 1.15 }}
         animate={{ scale: 1 }}
-        transition={{ 
+        transition={{
           duration: 8, // ← Faster
-          repeat: Infinity, 
+          repeat: Infinity,
           repeatType: "reverse",
           ease: "easeInOut"
         }}
@@ -59,7 +84,7 @@ export default function HomePage() {
           className="flex items-center gap-2 bg-black/50 backdrop-blur-xl border border-white/10 rounded-full px-6 py-3 shadow-2xl"
         >
           <ChefHat className="w-6 h-6 text-yellow-400" />
-          <h1 className="text-2xl font-bold text-white tracking-wider">RestoScan</h1>
+          <h1 className="text-2xl font-bold text-white tracking-wider">{restaurantName}</h1>
         </motion.div>
       </header>
 
@@ -73,8 +98,7 @@ export default function HomePage() {
           <h2 className="text-4xl sm:text-6xl md:text-7xl font-extrabold text-white leading-tight">
             Welcome to <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">
-              RestoScan
-            </span>
+{restaurantName}            </span>
           </h2>
           <p className="text-sm sm:text-lg text-gray-300 mt-4 max-w-xl mx-auto font-light">
             Where every bite tells a story of passion, tradition, and flavor.
@@ -88,9 +112,9 @@ export default function HomePage() {
           transition={{ duration: 0.5, delay: 0.3 }}
           whileTap={{ scale: 0.93 }} // ← Mobile tap effect
           onClick={() => {
-              const params = new URLSearchParams(window.location.search);
-  const token = params.get("token");
-    navigate(`/customerwebsite/menu?token=${token}`);
+            const params = new URLSearchParams(window.location.search);
+            const token = params.get("token");
+            navigate(`/customerwebsite/menu?token=${token}`);
 
           }}
           className="mt-10 group relative overflow-hidden bg-gradient-to-r from-yellow-500 to-orange-600 text-black font-bold text-lg px-8 py-4 rounded-full shadow-xl flex items-center gap-3 transition-all active:scale-95"

@@ -19,7 +19,7 @@ export default function Dashboard() {
     queryKey: ["dashboardStats"],
     queryFn: async () => {
       const res = await api.get("/restaurant/dashboard/stats");
-      console.log("Dashboard Stats:", res.data);
+      // console.log("Dashboard Stats:", res.data);
       return res.data;
     },
     refetchInterval: 7000,
