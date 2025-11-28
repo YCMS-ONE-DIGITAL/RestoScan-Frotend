@@ -11,15 +11,9 @@ const api = axios.create({
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (
-      err.config?.url?.includes("/user/me") &&
-      err.response?.status === 401
-    ) {
-      return Promise.reject(false);
-    }
-
     return Promise.reject(err);
   }
 );
+
 
 export default api;

@@ -17,7 +17,7 @@ import { encryptData } from "@/utils/encryption";
 import UserDetailsWithOtpModal from "../Components/UserDetailsModal"; // ✅ IMPORT MODAL
 
 export default function Footer({ restaurantId,
-  tableNo, tableId }) {
+  tableNo, tableId,RestaurantName }) {
   const {
     cartItems,
     cartCount,
@@ -122,7 +122,7 @@ export default function Footer({ restaurantId,
         encryptData({
           restaurant_id: Number(restaurantId),
           phone, // ✅ important for history
-    //          restaurant_name: restaurant.name,
+         restaurant_name: RestaurantName,
     // table_no: table.number,   // only for dine-in
     // table_id: table.id,
         })
@@ -132,7 +132,7 @@ export default function Footer({ restaurantId,
 
 
       // ✅ Redirect with updated token
-      navigate(`/customerwebsite/orderhistory?token=${newToken}`);
+      // navigate(`/customerwebsite/orderhistory?token=${newToken}`);
     } catch (err) {
       console.error("ORDER ERROR:", err);
       alert("Order creation failed");
@@ -150,8 +150,8 @@ export default function Footer({ restaurantId,
           <button
             onClick={() => {
               const params = new URLSearchParams(window.location.search);
-              const token = params.get("token");
-              navigate(`/customerwebsite?token=${token}`);
+              const newToken = params.get("token");
+              navigate(`/customerwebsite?token=${newToken}`);
             }}
             className={`flex flex-col items-center ${isActive("/customerwebsite") ? "text-orange-600" : "text-gray-500"
               }`}
@@ -163,8 +163,8 @@ export default function Footer({ restaurantId,
           <button
             onClick={() => {
               const params = new URLSearchParams(window.location.search);
-              const token = params.get("token");
-              navigate(`/customerwebsite/menu?token=${token}`);
+              const newToken = params.get("token");
+              navigate(`/customerwebsite/menu?token=${newToken}`);
             }}
             className={`flex flex-col items-center ${isActive("/customerwebsite/menu") ? "text-orange-600" : "text-gray-500"
               }`}
@@ -176,8 +176,8 @@ export default function Footer({ restaurantId,
           <button
             onClick={() => {
               const params = new URLSearchParams(window.location.search);
-              const token = params.get("token");
-              navigate(`/customerwebsite/orderhistory?token=${token}`);
+              const newToken = params.get("token");
+              navigate(`/customerwebsite/orderhistory?token=${newToken}`);
             }}
             className={`flex flex-col items-center ${isActive("/customerwebsite/orderhistory")
                 ? "text-orange-600"

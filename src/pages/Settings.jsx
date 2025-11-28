@@ -65,20 +65,31 @@ const Settings = () => {
     }
   };
 
-  const updatePassword = async () => {
-    if (passwords.new_password !== passwords.confirm_password) {
-      alert("Passwords do not match!");
-      return;
-    }
+const updatePassword = async () => {
+  if (passwords.new_password !== passwords.confirm_password) {
+    alert("Passwords do not match!");
+    return;
+  }
 
-    try {
-      await api.post("/user/change-password", passwords);
-      alert("Password updated ✅");
-      setPasswords({ current_password: "", new_password: "", confirm_password: "" });
-    } catch {
-      alert("Incorrect current password");
-    }
-  };
+  try {
+    await api.post("/user/change-password", {
+      old_password: passwords.current_password,
+      new_password: passwords.new_password,
+      new_password_confirmation: passwords.confirm_password,
+    });
+
+    alert("Password updated ✅");
+
+    setPasswords({
+      current_password: "",
+      new_password: "",
+      confirm_password: "",
+    });
+  } catch (err) {
+    alert("Incorrect current password");
+  }
+};
+
 
   const updateRestaurant = async () => {
     try {
@@ -88,6 +99,19 @@ const Settings = () => {
       alert("Failed to update restaurant");
     }
   };
+
+const logoutUser = async () => {
+  try {
+    await api.get("/user/logout");
+
+    // navigate("/login", { replace: true });
+    window.location.href = "/login";  // RESET React state fully
+
+  } catch {
+    alert("Failed to logout");
+  }
+};
+
 
   if (loading) return <div className="text-center text-white mt-20">Loading...</div>;
 
@@ -139,13 +163,20 @@ const Settings = () => {
               className="w-full mb-3 p-2 rounded bg-gray-700"
               placeholder="Phone Number"
             />
-
+      <div className="flex justify-between">
             <button
               onClick={updateUser}
               className="px-4 py-2 bg-blue-600 rounded hover:bg-blue-500"
             >
               Save Profile
             </button>
+            <button
+              onClick={logoutUser}
+              className="px-4 py-2 bg-red-600 rounded hover:bg-blue-500"
+            >
+              Logout
+            </button>
+            </div>
           </section>
         )}
 

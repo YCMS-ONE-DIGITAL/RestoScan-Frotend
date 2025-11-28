@@ -10,7 +10,7 @@ import { decryptData } from "@/utils/encryption";
 export default function HomePage() {
   const navigate = useNavigate();
     const [restaurantName, setRestaurantName] = useState(""); // ✅ NEW
-  
+  console.log(restaurantName)
 
   // Decode Token
     useEffect(() => {
@@ -24,6 +24,7 @@ export default function HomePage() {
       try {
         const decrypted = decryptData(atob(baseToken));
         if (decrypted?.restaurant_name) setRestaurantName(decrypted.restaurant_name); // ✅ NEW
+        // console.log(decrypted.restaurant_name)
       } catch {
         console.error("Invalid token");
       } finally {

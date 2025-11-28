@@ -6,20 +6,23 @@ export default function PublicRoute({ children }) {
   const [loading, setLoading] = useState(true);
   const [auth, setAuth] = useState(false);
 
-  useEffect(() => {
-    api.get("/user/me")
-      .then(() => {
-        setAuth(true);     // ✔ user logged in
-      })
-      .catch(() => {
-        setAuth(false);    // ❌ not logged in
-      })
-      .finally(() => setLoading(false));
-  }, []);
+useEffect(() => {
+  const checkAuth = async () => {
+    try {
+      await api.get("/user/me");
+      setAuth(true);
+    } catch {
+      setAuth(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  checkAuth();
+}, []);
 
   if (loading) return <div className="mt-20 text-center">Loading...</div>;
 
-  // ⭐ logged-in user should NOT see login/signup
   if (auth) return <Navigate to="/dashboard" replace />;
 
   return children;
