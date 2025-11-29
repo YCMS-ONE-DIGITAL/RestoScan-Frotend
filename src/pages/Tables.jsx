@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 
 import AddEditTableModal from "../components/TableComponents/AddTableModal";
-import QRModal from "@/components/TableComponents/QRModal";
+import QRModal from "../components/TableComponents/QRModal";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/api/api";
 
