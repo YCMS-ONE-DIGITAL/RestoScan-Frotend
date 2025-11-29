@@ -3,7 +3,7 @@ import { QRCodeCanvas } from "qrcode.react";
 import { X, Download } from "lucide-react";
 import { encryptData } from "@/utils/encryption";
 
-export default function QRModal({ isOpen, onClose, table, restaurant }) {
+export default function QRmodal({ isOpen, onClose, table, restaurant }) {
   const qrRef = useRef(null);
 
   if (!isOpen || !table || !restaurant) return null;
