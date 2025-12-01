@@ -32,7 +32,11 @@ export default function MenuItemsForm({
       setCategoryId(item.category_id?.toString() || "");
       setType(item.type || "veg");
       setPrice(item.price?.toString() || "");
-      setImagePreview(item.image || null);
+setImagePreview(
+  item.image 
+    ? "http://localhost:8000/storage/" + item.image 
+    : null
+);
       setIsAvailable(item.is_available ?? true);
       setImageFile(null);
     } else {
@@ -62,6 +66,7 @@ export default function MenuItemsForm({
 
   const formData = new FormData();
   formData.append("file", imageFile);
+  formData.append("item_name", name); // ← ⭐ send item name
 
   try {
     const res = await api.post(
@@ -138,78 +143,139 @@ export default function MenuItemsForm({
   const isLoading = createItem.isPending || updateItem.isPending;
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <Card className="w-full max-w-2xl bg-gray-900 text-white border-gray-800">
-        <CardHeader>
-          <CardTitle className="text-2xl">
-            {item ? "Edit Menu Item" : "Add New Item"}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <Input placeholder="Item Name *" value={name} onChange={(e) => setName(e.target.value)} required className="bg-gray-800 border-gray-700" />
+   <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+  <Card className="w-full max-w-2xl bg-gray-900 text-white border-gray-800 max-h-[90vh] overflow-hidden">
 
-            <textarea className="w-full bg-gray-800 p-4 rounded-lg border border-gray-700 focus:border-white outline-none resize-none" rows={3} placeholder="Description (optional)" value={description} onChange={(e) => setDescription(e.target.value)} />
+    <CardHeader>
+      <CardTitle className="text-2xl">
+        {item ? "Edit Menu Item" : "Add New Item"}
+      </CardTitle>
+    </CardHeader>
 
-            <select className="w-full bg-gray-800 p-4 rounded-lg border border-gray-700 text-white" value={menuId} onChange={(e) => setMenuId(e.target.value)} required>
-              <option value="">Select Menu *</option>
-              {menus?.map((m) => (
-                <option key={m.id} value={m.id}>{m.name}</option>
-              ))}
-            </select>
+    {/* FORM SCROLL CONTAINER → prevents overflow issues */}
+    <div className="px-6 pb-6 overflow-y-auto max-h-[75vh]">
 
-            <select className="w-full bg-gray-800 p-4 rounded-lg border border-gray-700 text-white" value={categoryId} onChange={(e) => setCategoryId(e.target.value)} required>
-              <option value="">Select Category *</option>
-              {categories?.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
+      <form onSubmit={handleSubmit} className="space-y-5">
 
-            <select className="w-full bg-gray-800 p-4 rounded-lg border border-gray-700 text-white" value={type} onChange={(e) => setType(e.target.value)}>
-              <option value="veg">Veg</option>
-              <option value="non_veg">Non-Veg</option>
-              <option value="egg">Egg</option>
-            </select>
+        {/* GRID FIELDS */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-            <Input type="number" step="0.01" placeholder="Price *" value={price} onChange={(e) => setPrice(e.target.value)} required className="bg-gray-800 border-gray-700" />
+          <Input
+            placeholder="Item Name *"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+            className="bg-gray-800 border-gray-700"
+          />
 
-            <div>
-              <label className="block text-sm font-medium mb-2">Item Image</label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    if (imagePreview && imagePreview.startsWith("blob:")) URL.revokeObjectURL(imagePreview);
-                    setImageFile(file);
-                    setImagePreview(URL.createObjectURL(file));
-                  }
-                }}
-                className="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:bg-gray-700 file:border-0 file:text-white hover:file:bg-gray-600"
+          <Input
+            type="number"
+            step="0.01"
+            placeholder="Price *"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+            required
+            className="bg-gray-800 border-gray-700"
+          />
+
+          <select
+            className="bg-gray-800 p-3 rounded-lg border border-gray-700 text-white"
+            value={menuId}
+            onChange={(e) => setMenuId(e.target.value)}
+          >
+            <option value="">Select Menu</option>
+            {menus?.map(m => (
+              <option key={m.id} value={m.id}>{m.name}</option>
+            ))}
+          </select>
+
+          <select
+            className="bg-gray-800 p-3 rounded-lg border border-gray-700 text-white"
+            value={categoryId}
+            onChange={(e) => setCategoryId(e.target.value)}
+          >
+            <option value="">Select Category</option>
+            {categories?.map(c => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+
+          <select
+            className="bg-gray-800 p-3 rounded-lg border border-gray-700 text-white"
+            value={type}
+            onChange={(e) => setType(e.target.value)}
+          >
+            <option value="veg">Veg</option>
+            <option value="non_veg">Non-Veg</option>
+            <option value="egg">Egg</option>
+          </select>
+
+          <div className="flex items-center bg-gray-800 px-4 py-3 rounded-lg border border-gray-700">
+            <input
+              type="checkbox"
+              checked={isAvailable}
+              onChange={(e) => setIsAvailable(e.target.checked)}
+              className="w-5 h-5 mr-3"
+            />
+            <span className="text-lg">Available</span>
+          </div>
+        </div>
+
+        {/* DESCRIPTION */}
+        <textarea
+          className="w-full bg-gray-800 p-4 rounded-lg border h-full border-gray-700"
+          rows={3}
+          placeholder="Description (optional)"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+        />
+
+        {/* IMAGE UPLOAD */}
+        <div>
+          <label className="block text-sm font-medium mb-2">Item Image</label>
+            <div className="flex justify-arround">
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                if (imagePreview?.startsWith("blob:")) URL.revokeObjectURL(imagePreview);
+                setImageFile(file);
+                setImagePreview(URL.createObjectURL(file));
+              }
+            }}
+            className="w-full text-gray-300 file:bg-gray-700 file:text-white file:px-4 file:py-2 file:rounded-lg"
+          />
+
+          {imagePreview && (
+            <div className="mt-4">
+              <img
+                src={imagePreview}
+                alt="Preview"
+                className="w-[50px] max-h-40 object-fit rounded-lg border border-gray-700"
               />
-              {imagePreview && (
-                <div className="mt-4">
-                  <img src={imagePreview} alt="Preview" className="w-full h-64 object-cover rounded-lg border border-gray-700" />
-                  {imageFile && <p className="text-xs text-green-400 mt-2">New image will be uploaded</p>}
-                </div>
-              )}
             </div>
+          )}
 
-            <div className="flex items-center gap-3">
-              <input type="checkbox" checked={isAvailable} onChange={(e) => setIsAvailable(e.target.checked)} className="w-5 h-5 rounded" />
-              <label className="text-lg">Item is available</label>
-            </div>
 
-            <div className="flex justify-end gap-4 pt-6">
-              <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>Cancel</Button>
-              <Button type="submit" disabled={isLoading} className="bg-green-600 hover:bg-green-700">
-                {isLoading ? "Saving..." : item ? "Update Item" : "Create Item"}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+          </div>
+        </div>
+
+        {/* BUTTONS */}
+        <div className="flex flex-col sm:flex-row gap-4 justify-end pt-4">
+          <Button variant="outline" className="text-gray-800" onClick={onClose} disabled={isLoading}>
+            Cancel
+          </Button>
+          <Button className="bg-green-600 hover:bg-green-700" disabled={isLoading}>
+            {isLoading ? "Saving..." : item ? "Update Item" : "Create Item"}
+          </Button>
+        </div>
+
+      </form>
     </div>
+  </Card>
+</div>
+
   );
 }

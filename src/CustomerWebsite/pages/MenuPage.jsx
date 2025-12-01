@@ -12,7 +12,7 @@ export default function MenuPage() {
   const [vegFilter, setVegFilter] = useState("all");
 
   const [restaurantId, setRestaurantId] = useState(null);
-  const [restaurantName, setRestaurantName] = useState(""); // ✅ NEW
+  const [restaurantName, setRestaurantName] = useState("");
   const [tableNo, setTableNo] = useState(null);
   const [tableId, setTableId] = useState(null);
 
@@ -23,17 +23,22 @@ export default function MenuPage() {
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const { addToCart, removeFromCart, updateNote, cartItems } = useCart();
+  const { addToCart, removeFromCart, cartItems } = useCart();
 
+  // ⭐ Convert backend image path to full URL
   const getImageUrl = (path) => {
-    if (!path) return null;
-    if (path.startsWith("http")) return path;
+  if (!path) return null;
 
-    const base = import.meta.env.VITE_API_URL || "http://localhost:8000";
-    return base + (path.startsWith("/") ? path : "/" + path);
-  };
+  // Full URL
+  if (path.startsWith("http")) return path;
 
-  // ✅ Decode Token
+  // Laravel public storage
+  return "http://localhost:8000/storage/" + path;
+};
+
+
+
+  // ⭐ Decode TOKEN
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const baseToken = params.get("token");
@@ -47,7 +52,7 @@ export default function MenuPage() {
       const decrypted = decryptData(atob(baseToken));
 
       if (decrypted?.restaurant_id) setRestaurantId(decrypted.restaurant_id);
-      if (decrypted?.restaurant_name) setRestaurantName(decrypted.restaurant_name); // ✅ NEW
+      if (decrypted?.restaurant_name) setRestaurantName(decrypted.restaurant_name);
 
       if (decrypted?.table_no) setTableNo(decrypted.table_no);
       if (decrypted?.table_id) setTableId(decrypted.table_id);
@@ -58,7 +63,7 @@ export default function MenuPage() {
     }
   }, []);
 
-  // ✅ Fetch Categories
+  // ⭐ Fetch Categories
   useEffect(() => {
     if (!restaurantId) return;
 
@@ -68,18 +73,23 @@ export default function MenuPage() {
         const formatted = res.data.map((cat) => ({
           id: cat.id,
           name: cat.name,
-          image: "/assets/customerwebsite/category/image.jpg",
+          image:
+            getImageUrl(cat.image_url) 
         }));
 
         setCategories([
-          { id: "all", name: "All", image: "/assets/customerwebsite/category/image.jpg" },
+          {
+            id: "all",
+            name: "All",
+            image: "/assets/customerwebsite/category/image.jpg",
+          },
           ...formatted,
         ]);
       })
-      .catch((err) => console.log("CATEGORY ERROR =", err.response?.data));
+      .catch((err) => console.log("CATEGORY ERROR =", err))
   }, [restaurantId]);
 
-  // ✅ Fetch Menu Items
+  // ⭐ Fetch Menu Items
   useEffect(() => {
     if (!restaurantId) return;
 
@@ -102,18 +112,17 @@ export default function MenuPage() {
 
         setMenuItems(items);
       })
-      .catch((err) => console.log("MENU API ERROR =", err.response?.data))
+      .catch((err) => console.log("MENU API ERROR =", err))
       .finally(() => setLoading(false));
   }, [restaurantId]);
 
-  // ✅ Filtering Logic
+  // ⭐ Filtering Logic
   const filteredMenu = menuItems.filter((item) => {
     const matchSearch =
       (item.name || "").toLowerCase().includes(search.toLowerCase());
 
     const matchCat =
-      selectedCategory === "all" ||
-      item.category === selectedCategory;
+      selectedCategory === "all" || item.category === selectedCategory;
 
     const matchVeg =
       vegFilter === "all" ||
@@ -133,7 +142,7 @@ export default function MenuPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
-      {/* ✅ HEADER */}
+      {/* ⭐ HEADER */}
       <header className="bg-white shadow-sm px-4 py-3 flex items-center justify-between">
         <h1 className="font-bold text-gray-800">{restaurantName || "RestoScan"}</h1>
 
@@ -147,7 +156,7 @@ export default function MenuPage() {
         )}
       </header>
 
-      {/* SEARCH + VEG FILTER */}
+      {/* ⭐ SEARCH + FILTERS */}
       <div className="sticky top-0 bg-white px-4 py-3 border-b space-y-3 z-20">
         <div className="flex items-center bg-gray-100 px-3 py-2 rounded-lg">
           <Search className="w-5 h-5 text-gray-600" />
@@ -165,7 +174,7 @@ export default function MenuPage() {
             onClick={() => setVegFilter("all")}
             className={`px-4 py-1.5 rounded-full text-xs font-medium whitespace-nowrap
               ${vegFilter === "all"
-                ? "bg-orange-500 text-white shadow-sm"
+                ? "bg-orange-500 text-white"
                 : "bg-gray-100 text-gray-700"
               }`}
           >
@@ -196,7 +205,7 @@ export default function MenuPage() {
         </div>
       </div>
 
-      {/* CATEGORY SLIDER */}
+      {/* ⭐ CATEGORY SLIDER */}
       <div className="px-4 py-2">
         <div className="flex gap-3 overflow-x-auto scrollbar-hide whitespace-nowrap">
           {categories.map((cat) => (
@@ -210,7 +219,11 @@ export default function MenuPage() {
               }`}
             >
               <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-gray-200">
-                <img src={cat.image} alt={cat.name} className="w-full h-full object-cover" />
+                <img
+                  src={cat.image}
+                  alt={cat.name}
+                  className="w-full h-full object-cover"
+                />
               </div>
               <span className="text-xs font-medium">{cat.name}</span>
             </button>
@@ -218,7 +231,7 @@ export default function MenuPage() {
         </div>
       </div>
 
-      {/* MENU LIST */}
+      {/* ⭐ MENU ITEMS LIST */}
       <div className="px-4 py-3">
         {filteredMenu.length > 0 ? (
           filteredMenu.map((item) => {
@@ -236,13 +249,11 @@ export default function MenuPage() {
             );
           })
         ) : (
-          <p className="text-center text-gray-500 py-10">
-            No menu items found
-          </p>
+          <p className="text-center text-gray-500 py-10">No menu items found</p>
         )}
       </div>
 
-      {/* ✅ FOOTER */}
+      {/* ⭐ FOOTER */}
       <Footer
         restaurantId={restaurantId}
         restaurantName={restaurantName}

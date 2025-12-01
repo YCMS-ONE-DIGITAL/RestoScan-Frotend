@@ -14,21 +14,27 @@ export default function AddRestaurant() {
     contact_number: "",
   });
 
+  const [logo, setLogo] = useState(null);
+
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    const formData = new FormData();
+    Object.keys(form).forEach((key) => formData.append(key, form[key]));
+    if (logo) formData.append("logo", logo);
+
     try {
-      const res = await api.post("/restaurant/store", form);
+      const res = await api.post("/restaurant/store", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
 
       if (res.data.status === "success") {
-      alert("Restaurant saved successfully!");
-
-      // ✅ Ensure ProtectedRoutes confirms it
-      window.location.href = "/dashboard";
-    }
+        alert("Restaurant saved successfully!");
+        window.location.href = "/dashboard";
+      }
     } catch (err) {
       alert(err.response?.data?.message || "Failed to save restaurant");
     }
@@ -89,6 +95,25 @@ export default function AddRestaurant() {
           className="w-full border p-2 rounded"
           onChange={handleChange}
         />
+
+        {/* LOGO UPLOAD */}
+        <div>
+          <label className="block text-gray-700">Logo</label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => setLogo(e.target.files[0])}
+            className="w-full border p-2 rounded"
+          />
+
+          {logo && (
+            <img
+              src={URL.createObjectURL(logo)}
+              alt="Preview"
+              className="h-20 mt-2 rounded border"
+            />
+          )}
+        </div>
 
         <button
           type="submit"

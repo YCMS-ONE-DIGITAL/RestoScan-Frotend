@@ -11,47 +11,67 @@ import {
   Settings
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import api from "@/api/api"; // ✅ API import
+import api from "@/api/api";
 
 export default function Sidebar({ onNavigate }) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
 
   const [restaurantName, setRestaurantName] = useState("Restaurant");
+  const [logo, setLogo] = useState(null);
 
-  // ---------------------------------------
-  // 👉 Fetch Restaurant from /restaurant/show
-  // ---------------------------------------
+  // IMAGE FIX HELPER
+  const getImageUrl = (path) => {
+    if (!path) return null;
+    if (path.startsWith("http")) return path;
+
+    const base = import.meta.env.VITE_API_URL || "http://localhost:8000";
+    return `${base}/storage/${path}`;
+  };
+
   useEffect(() => {
     const fetchRestaurant = async () => {
       try {
-        const restRes = await api.get("/restaurant/show");
+        const res = await api.get("/restaurant/show");
 
-        if (restRes.data?.restaurant) {
-          setRestaurantName(restRes.data.restaurant.restaurant_name);
+        if (res.data?.restaurant) {
+          const r = res.data.restaurant;
+
+          setRestaurantName(r.restaurant_name || "Restaurant");
+          setLogo(getImageUrl(r.logo_url));   // ⭐ Set Logo
         }
       } catch (err) {
-        console.error("Failed to load restaurant", err);
+        console.error("Restaurant fetch error:", err);
       }
     };
 
     fetchRestaurant();
   }, []);
-  
 
   const handleNav = (id) => {
     navigate(id);
-    if (onNavigate) onNavigate(); // Close drawer mobile
+    if (onNavigate) onNavigate();
   };
 
   return (
     <aside className="w-full bg-[#121826] text-white h-screen overflow-y-auto p-4 flex flex-col">
 
-      {/* Restaurant Name */}
-      <div className="flex items-center gap-2 mb-8">
-        <div className="bg-indigo-500 text-white w-8 h-8 flex items-center justify-center rounded-md font-bold uppercase">
-          {restaurantName.charAt(0)}
-        </div>
+      {/* ⭐ Restaurant Logo + Name */}
+      <div className="flex items-center gap-3 mb-8">
+
+        {/* Logo OR Fallback Initial */}
+        {logo ? (
+          <img
+            src={logo}
+            alt="Logo"
+            className="w-10 h-10 rounded-lg object-cover border border-white/20"
+          />
+        ) : (
+          <div className="bg-indigo-500 text-white w-10 h-10 flex items-center justify-center rounded-md font-bold uppercase">
+            {restaurantName.charAt(0)}
+          </div>
+        )}
+
         <span className="text-lg font-semibold capitalize truncate max-w-[160px]">
           {restaurantName}
         </span>
@@ -88,15 +108,7 @@ export default function Sidebar({ onNavigate }) {
           { id: "/customers", label: "Customers", icon: Users },
           { id: "/staff", label: "Staff", icon: UserStarIcon },
 
-          {
-            id: "/payments",
-            label: "Payments",
-            icon: CreditCardIcon,
-            // children: [
-            //   { id: "/payments", label: "Payment" },
-            //   { id: "/payments/paymentdue", label: "Payment Due" },
-            // ],
-          },
+          { id: "/payments", label: "Payments", icon: CreditCardIcon },
 
           { id: "/settings", label: "Setting", icon: Settings },
         ].map((link) => (

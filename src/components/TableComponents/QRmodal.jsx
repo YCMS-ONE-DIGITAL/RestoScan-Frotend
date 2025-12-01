@@ -8,6 +8,16 @@ export default function QRmodal({ isOpen, onClose, table, restaurant }) {
 
   if (!isOpen || !table || !restaurant) return null;
 
+  // ⭐ Convert storage path → full URL
+  const getImageUrl = (path) => {
+    if (!path) return null;
+
+    const base = import.meta.env.VITE_API_URL || "http://localhost:8000";
+    return `${base}/storage/${path}`;
+  };
+
+  const logoUrl = getImageUrl(restaurant.logo);
+
   const rawToken = encryptData({
     restaurant_id: restaurant.id,
     restaurant_name: restaurant.restaurant_name,
@@ -66,22 +76,24 @@ export default function QRmodal({ isOpen, onClose, table, restaurant }) {
             className="inline-block bg-white p-4 sm:p-6 rounded-2xl shadow-xl border-8 border-gray-100"
           >
             <div className="p-3 sm:p-4 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl">
+
+              {/* ⭐ QR Code with Restaurant Logo in middle ⭐ */}
               <QRCodeCanvas
                 value={qrURL}
-                size={window.innerWidth < 400 ? 180 : 220} // ✅ responsive QR size
+                size={window.innerWidth < 400 ? 180 : 220}
                 level="H"
                 includeMargin
                 imageSettings={{
-                  src: "/logo192.png",
-                  height: 40,
-                  width: 40,
+                  src: logoUrl || "/fallback-logo.png",   // ⭐ Dynamic restaurant logo
+                  height: 50,
+                  width: 50,
                   excavate: true,
                 }}
               />
+
             </div>
           </div>
 
-          {/* Description */}
           <p className="text-xs sm:text-sm font-semibold text-gray-700 mt-6">
             Scan to View Menu
           </p>

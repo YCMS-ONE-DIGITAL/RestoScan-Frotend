@@ -66,9 +66,11 @@ export default function Orders() {
       status: updatedOrder.status,
       payment_status: updatedOrder.payment_status,
       payment_method: updatedOrder.payment_method,
+       order_note: updatedOrder.order_note,
       items: updatedOrder.items.map((it) => ({
         order_item_id: it.id,
         quantity: it.quantity,
+        item_note: it.item_note,
       })),
       deleted_items: deletedItems,
     });

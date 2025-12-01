@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Eye, EyeOff, Mail, Phone } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import api from "../../api/api";
+import ForgotPassword from "../auth/ForgotPassword";
 
 export default function AuthForm() {
   const navigate = useNavigate();
@@ -51,13 +52,13 @@ export default function AuthForm() {
     // ⭐ SIGNUP → SEND OTP
     try {
 
-       console.log("OTP SEND PAYLOAD:", {
-    name: formData.name,
-    email: formData.email,
-    phone_number: formData.phone_number,
-    password: formData.password,
-  });
-  
+      console.log("OTP SEND PAYLOAD:", {
+        name: formData.name,
+        email: formData.email,
+        phone_number: formData.phone_number,
+        password: formData.password,
+      });
+
       const res = await api.post("/otp/send", {
         name: formData.name,
         email: formData.email,
@@ -188,17 +189,30 @@ export default function AuthForm() {
             >
               {loading ? "Please Wait..." : isLogin ? "Sign In" : "Sign Up"}
             </button>
+            <div className="flex align-item-center gap-3" >
+              <p className=" text-sm">
+                {isLogin ? "Don't have an account?" : "Already have an account?"}
+                <button
+                  type="button"
+                  onClick={() => setIsLogin(!isLogin)}
+                  className="text-blue-600 ml-1"
+                >
+                  {isLogin ? "Sign up " : "Sign in "}
+                </button>
 
-            <p className="text-center text-sm">
-              {isLogin ? "Don't have an account?" : "Already have an account?"}
-              <button
-                type="button"
-                onClick={() => setIsLogin(!isLogin)}
-                className="text-blue-600 ml-1"
-              >
-                {isLogin ? "Sign up" : "Sign in"}
-              </button>
-            </p>
+
+              </p>
+
+              {isLogin && (
+                <button
+                  type="button"
+                  onClick={() => navigate("/forgot-password")}
+                  className="text-blue-600 text-sm"
+                >
+                  Forgot Password?
+                </button>
+              )}
+            </div>
 
           </form>
         )}

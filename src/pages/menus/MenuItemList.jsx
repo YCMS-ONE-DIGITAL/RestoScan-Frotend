@@ -9,16 +9,13 @@ import MenuItemsForm from "./MenuItemForm";
 const getImageUrl = (path) => {
   if (!path) return null;
 
+  // Full URL
   if (path.startsWith("http")) return path;
 
-  const base = "http://localhost:8000";
-
-  if (!path.startsWith("/")) {
-    path = "/" + path;
-  }
-
-  return base + path;
+  // Laravel public storage
+  return "http://localhost:8000/storage/" + path;
 };
+
 
 export default function MenuItemsList() {
   const qc = useQueryClient();

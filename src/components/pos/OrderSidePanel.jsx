@@ -6,54 +6,63 @@ export default function OrderSidePanel({ order }) {
     items: [],
     table_id: null,
     table_no: null,
-    order_type: "dine_in", // ✅ must match DB ENUM
+    order_type: "dine_in",
     customer_name: "",
     customer_phone: "",
+    order_note: "",              // ⭐ NEW
   });
 
-  // ✅ Load cart/order data smoothly
+  // Load order/cart
   useEffect(() => {
     if (order) {
       setOrderData((prev) => ({
         ...prev,
-        items: order.items || [],
+        items: order.items?.map((i) => ({
+          ...i,
+          qty: i.qty || i.quantity || 1,
+          item_note: i.item_note || "",     // ⭐ NEW
+        })) || [],
         table_id: order.table_id || null,
         table_no: order.table_no || null,
       }));
     }
   }, [order]);
 
-  // ✅ Total Calculation
+  // Total calculation
   const totals = useMemo(() => {
-    let sub = 0;
-    let count = 0;
+    let sub = 0, count = 0;
 
     orderData.items.forEach((it) => {
-      const qty = Number(it.qty) || 1;
-      const price = Number(it.price) || 0;
-      sub += qty * price;
-      count += qty;
+      sub += Number(it.qty) * Number(it.price);
+      count += Number(it.qty);
     });
 
     return { count, total: sub };
   }, [orderData.items]);
 
-  // ✅ Qty Update
+  // Qty Update
   const updateQty = (id, type) => {
     setOrderData((prev) => ({
       ...prev,
       items: prev.items.map((it) =>
         it.id === id
-          ? {
-              ...it,
-              qty: type === "inc" ? Number(it.qty) + 1 : Math.max(1, Number(it.qty) - 1),
-            }
+          ? { ...it, qty: type === "inc" ? it.qty + 1 : Math.max(1, it.qty - 1) }
           : it
       ),
     }));
   };
 
-  // ✅ Remove item
+  // Item Note Update
+  const updateItemNote = (id, note) => {
+    setOrderData((prev) => ({
+      ...prev,
+      items: prev.items.map((it) =>
+        it.id === id ? { ...it, item_note: note } : it
+      ),
+    }));
+  };
+
+  // Remove Item
   const removeItem = (id) => {
     setOrderData((prev) => ({
       ...prev,
@@ -61,45 +70,40 @@ export default function OrderSidePanel({ order }) {
     }));
   };
 
-  // ✅ CREATE ORDER API CALL
+  // CREATE ORDER API
   const createOrder = async () => {
-    if (orderData.items.length === 0) {
-      alert("No items added!");
-      return;
-    }
+    if (!orderData.items.length) return alert("No items added!");
 
-    // ✅ Dine-in requires table
-    if (orderData.order_type === "dine_in" && !orderData.table_id) {
-      alert("Please select a table");
-      return;
-    }
+    if (orderData.order_type === "dine_in" && !orderData.table_id)
+      return alert("Please select a table");
 
     try {
       const payload = {
         order_type: orderData.order_type,
-        table_id: orderData.order_type === "dine_in" ? Number(orderData.table_id) : null,
+        table_id: orderData.order_type === "dine_in" ? orderData.table_id : null,
         customer_name: orderData.customer_name || null,
         customer_phone: orderData.customer_phone || null,
+        order_note: orderData.order_note || null,     // ⭐ NEW
         items: orderData.items.map((i) => ({
           menu_item_id: i.id,
-          quantity: Number(i.qty),
+          quantity: i.qty,
+          item_note: i.item_note || null,            // ⭐ NEW
         })),
       };
 
-      const res = await api.post("/restaurant/orders/create", payload);
+      await api.post("/restaurant/orders/create", payload);
+      alert("Order created!");
 
-      alert("Order created successfully!");
-       // ✅ CLEAR CART / RESET FORM
-    setOrderData({
-      items: [],
-      table_id: null,
-      table_no: null,
-      order_type: "dine_in",
-      customer_name: "",
-      customer_phone: "",
-    });
-      // console.log("ORDER RESPONSE:", res.data);
-
+      // reset
+      setOrderData({
+        items: [],
+        table_id: null,
+        table_no: null,
+        order_type: "dine_in",
+        customer_name: "",
+        customer_phone: "",
+        order_note: "",
+      });
     } catch (err) {
       console.error(err);
       alert("Order creation failed");
@@ -114,11 +118,11 @@ export default function OrderSidePanel({ order }) {
         <h2 className="text-lg font-semibold">Create Order</h2>
       </div>
 
-      {/* ✅ Order Type Selector */}
-      <div className="p-4 flex flex-col gap-2 border-b border-gray-700">
-        <label className="text-sm text-gray-300">Order Type</label>
+      {/* Order Type */}
+      <div className="p-4 border-b border-gray-700">
+        <label className="text-sm">Order Type</label>
         <select
-          className="bg-gray-700 p-2 rounded"
+          className="bg-gray-700 p-2 rounded w-full"
           value={orderData.order_type}
           onChange={(e) =>
             setOrderData((o) => ({ ...o, order_type: e.target.value }))
@@ -130,14 +134,14 @@ export default function OrderSidePanel({ order }) {
         </select>
       </div>
 
-      {/* ✅ Customer Fields */}
-      <div className="px-4 py-2 flex flex-col gap-2 border-b border-gray-700">
-        <label className="text-sm text-gray-300">Customer (Optional)</label>
+      {/* Customer */}
+      <div className="p-4 border-b border-gray-700">
+        <label className="text-sm">Customer Details</label>
 
         <input
+          className="bg-gray-700 p-2 rounded mt-2 w-full"
           type="text"
           placeholder="Customer Name"
-          className="bg-gray-700 p-2 rounded"
           value={orderData.customer_name}
           onChange={(e) =>
             setOrderData((o) => ({ ...o, customer_name: e.target.value }))
@@ -145,10 +149,10 @@ export default function OrderSidePanel({ order }) {
         />
 
         <input
+          className="bg-gray-700 p-2 rounded mt-2 w-full"
           type="tel"
           placeholder="Phone Number"
           maxLength="10"
-          className="bg-gray-700 p-2 rounded"
           value={orderData.customer_phone}
           onChange={(e) =>
             setOrderData((o) => ({ ...o, customer_phone: e.target.value }))
@@ -156,7 +160,21 @@ export default function OrderSidePanel({ order }) {
         />
       </div>
 
-      {/* ✅ Show table only for dine-in */}
+      {/* Order Note */}
+      <div className="p-4 border-b border-gray-700">
+        <label className="text-sm">Order Note</label>
+        <textarea
+          className="bg-gray-700 p-2 rounded w-full mt-2"
+          rows={2}
+          placeholder="Eg: No Onion, Make Spicy"
+          value={orderData.order_note}
+          onChange={(e) =>
+            setOrderData((o) => ({ ...o, order_note: e.target.value }))
+          }
+        ></textarea>
+      </div>
+
+      {/* Table only for dine-in */}
       {orderData.order_type === "dine_in" && (
         <div className="p-4 border-b border-gray-700">
           <h2 className="text-lg font-semibold">
@@ -166,13 +184,12 @@ export default function OrderSidePanel({ order }) {
       )}
 
       {/* ITEMS */}
-      <div className="p-4 flex overflow-auto">
+      <div className="p-4 overflow-auto flex-1">
         <table className="w-full text-sm">
           <thead className="bg-gray-700">
             <tr>
               <th className="p-2 text-left">Item</th>
               <th className="p-2 text-center">Qty</th>
-              <th className="p-2 text-right">Price</th>
               <th className="p-2 text-right">Total</th>
               <th></th>
             </tr>
@@ -181,31 +198,55 @@ export default function OrderSidePanel({ order }) {
           <tbody>
             {orderData.items.length ? (
               orderData.items.map((it) => (
-                <tr key={it.id} className="border-t border-gray-700">
-                  <td className="p-2">{it.name}</td>
+                <React.Fragment key={it.id}>
+                  <tr className="border-t border-gray-700">
+                    <td className="p-2">{it.name}</td>
 
-                  <td className="p-2 text-center">
-                    <button className="border p-1 border-gray-400" onClick={() => updateQty(it.id, "dec")}>-</button>
-                    <span className="px-2">{it.qty}</span>
-                    <button className="border p-1 border-gray-400" onClick={() => updateQty(it.id, "inc")}>+</button>
-                  </td>
+                    <td className="p-2 text-center">
+                      <button
+                        className="border px-2 py-1"
+                        onClick={() => updateQty(it.id, "dec")}
+                      >
+                        -
+                      </button>
+                      <span className="px-2">{it.qty}</span>
+                      <button
+                        className="border px-2 py-1"
+                        onClick={() => updateQty(it.id, "inc")}
+                      >
+                        +
+                      </button>
+                    </td>
 
-                  <td className="p-2 text-right">₹{it.price}</td>
-                  <td className="p-2 text-right">₹{it.qty * it.price}</td>
+                    <td className="p-2 text-right">₹{it.qty * it.price}</td>
 
-                  <td className="p-2 text-right">
-                    <button
-                      onClick={() => removeItem(it.id)}
-                      className="text-red-500 text-xs"
-                    >
-                      Remove
-                    </button>
-                  </td>
-                </tr>
+                    <td className="p-2 text-right">
+                      <button
+                        className="text-red-500 text-xs"
+                        onClick={() => removeItem(it.id)}
+                      >
+                        Remove
+                      </button>
+                    </td>
+                  </tr>
+
+                  {/* Item note row */}
+                  <tr className="border-b border-gray-800">
+                    <td colSpan={4} className="px-2 pb-2">
+                      <textarea
+                        className="bg-gray-700 p-2 rounded w-full text-xs"
+                        rows={1}
+                        placeholder="Item note (optional)"
+                        value={it.item_note}
+                        onChange={(e) => updateItemNote(it.id, e.target.value)}
+                      ></textarea>
+                    </td>
+                  </tr>
+                </React.Fragment>
               ))
             ) : (
               <tr>
-                <td className="p-4 text-center text-gray-400" colSpan="5">
+                <td colSpan="4" className="p-4 text-center text-gray-400">
                   No Items Added
                 </td>
               </tr>
@@ -227,13 +268,12 @@ export default function OrderSidePanel({ order }) {
         </div>
 
         <button
-          className="w-full bg-green-600 mt-4 py-2 rounded"
+          className="w-full bg-green-600 py-2 mt-3 rounded"
           onClick={createOrder}
         >
           CREATE ORDER
         </button>
       </div>
-
     </aside>
   );
 }

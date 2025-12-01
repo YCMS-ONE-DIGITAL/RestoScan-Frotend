@@ -13,16 +13,16 @@ export default function Topbar({ onMenuToggle }) {
       </button>
 
       <div className="flex items-center gap-4 ml-auto">
-        <button className="bg-purple-700 text-white px-3 py-1.5 rounded-md text-sm">
+        {/* <button className="bg-purple-700 text-white px-3 py-1.5 rounded-md text-sm">
           Today Orders <span className="ml-2 bg-white text-purple-700 px-2 rounded">0</span>
-        </button>
+        </button> 
         <button className="hidden sm:flex bg-[#2B3348] px-3 py-1.5 rounded-md items-center gap-2 hover:bg-indigo-600 text-sm">
           <Rocket className="w-4 h-4" /> Upgrade Plan
-        </button>
+        </button>*/}
         <Sun className="w-5 h-5 text-gray-300" />
-        <div className="bg-gray-300 text-black rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm">
+        {/* <div className="bg-gray-300 text-black rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm">
           AB
-        </div>
+        </div> */}
       </div>
     </header>
   );

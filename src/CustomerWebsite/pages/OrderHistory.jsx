@@ -5,7 +5,6 @@ import { useNavigate } from "react-router-dom";
 import api from "@/api/api";
 import Footer from "./Footer";
 import { useCart } from "../context/CardContext";
-
 import { decryptData } from "@/utils/encryption";
 
 export default function OrderHistory() {
@@ -14,9 +13,9 @@ export default function OrderHistory() {
   const navigate = useNavigate();
   const { clearCart } = useCart();
 
-useEffect(() => {
-  clearCart();
-}, []);
+  useEffect(() => {
+    clearCart();
+  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -71,8 +70,7 @@ useEffect(() => {
             }`}
           >
             <div className="flex items-center justify-center gap-2">
-              <Package className="w-4 h-4" />
-              Orders
+              <Package className="w-4 h-4" /> Orders
             </div>
           </button>
 
@@ -83,8 +81,7 @@ useEffect(() => {
             }`}
           >
             <div className="flex items-center justify-center gap-2">
-              <ShoppingBag className="w-4 h-4" />
-              Items List
+              <ShoppingBag className="w-4 h-4" /> Items List
             </div>
           </button>
         </div>
@@ -133,6 +130,13 @@ useEffect(() => {
                       <p className="text-gray-600">{order.items.length} items</p>
                       <p className="font-bold text-orange-600">₹{order.total_amount}</p>
                     </div>
+
+                    {/* ⭐ ORDER NOTE */}
+                    {order.order_note && (
+                      <p className="text-xs text-gray-500 mt-2">
+                        📝 <span className="font-medium">Order Note:</span> {order.order_note}
+                      </p>
+                    )}
                   </div>
                 );
               })
@@ -152,7 +156,15 @@ useEffect(() => {
                     <div>
                       <p className="font-medium text-gray-800">{item.menu_item.name}</p>
                       <p className="text-xs text-gray-500">Order #{order.id}</p>
+
+                      {/* ⭐ ITEM NOTE */}
+                      {item.item_note && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          📝 Note: {item.item_note}
+                        </p>
+                      )}
                     </div>
+
                     <div className="text-right">
                       <p className="text-sm font-medium text-gray-700">
                         {item.quantity} × ₹{item.price}

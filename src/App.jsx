@@ -26,6 +26,7 @@ import OrderHistory from "./CustomerWebsite/pages/OrderHistory";
 import PublicRoute from "./components/PublicRoute";
 import ProtectedRoutes from "./components/ProtectedRoutes";
 import AddRestaurant from "./pages/AddRestaurant";
+import ForgotPassword from "./components/auth/ForgotPassword";
 
 const allPageRouter = createBrowserRouter([
   // ===========================
@@ -60,6 +61,12 @@ const allPageRouter = createBrowserRouter([
     path: "/login",
     element: <PublicRoute>
       <AuthForm />
+    </PublicRoute>,
+  },
+  {
+    path: "/forgot-password",
+    element: <PublicRoute>
+      <ForgotPassword />
     </PublicRoute>,
   },
 

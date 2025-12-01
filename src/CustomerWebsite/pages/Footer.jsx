@@ -13,11 +13,9 @@ import { useCart } from "../context/CardContext";
 import api from "@/api/api";
 import { encryptData } from "@/utils/encryption";
 
+import UserDetailsWithOtpModal from "../Components/UserDetailsModal";
 
-import UserDetailsWithOtpModal from "../Components/UserDetailsModal"; // ✅ IMPORT MODAL
-
-export default function Footer({ restaurantId,
-  tableNo, tableId,RestaurantName }) {
+export default function Footer({ restaurantId, tableNo, tableId, RestaurantName }) {
   const {
     cartItems,
     cartCount,
@@ -28,12 +26,10 @@ export default function Footer({ restaurantId,
     clearCart,
   } = useCart();
 
-  // console.log()
-
   const [isCartModalOpen, setIsCartModalOpen] = useState(false);
   const [showConfirmClear, setShowConfirmClear] = useState(false);
 
-  // ✅ USER FORM / OTP STATES
+  // USER FORM + OTP
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -44,23 +40,25 @@ export default function Footer({ restaurantId,
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [notes, setNotes] = useState({});
+  const [notes, setNotes] = useState({}); // item notes
+  const [orderNote, setOrderNote] = useState(""); // ⭐ entire order note
+
   const isActive = (targetPath) => location.pathname === targetPath;
 
-  // ✅ Notes
+  // ITEM NOTE CHANGE
   const handleNoteChange = (id, value) => {
     setNotes((prev) => ({ ...prev, [id]: value }));
     updateNote?.(id, value);
   };
 
-  // ✅ PLACE ORDER → Open User Details modal
+  // OPEN USER DETAILS FORM
   const handlePlaceOrder = () => {
     if (cartCount === 0) return;
     setIsCartModalOpen(false);
     setIsUserModalOpen(true);
   };
 
-  // ✅ Send OTP
+  // SEND OTP
   const handleSendOtp = () => {
     if (!name || !phone) {
       setErrors({ phone: "Name & Phone Number Required" });
@@ -70,8 +68,7 @@ export default function Footer({ restaurantId,
     setOtpSent(true);
   };
 
-  // ✅ Verify OTP
-  // ✅ Verify OTP
+  // VERIFY OTP + SEND ORDER TO BACKEND
   const handleVerifyOtp = async () => {
     if (otp !== "1234") {
       setErrors({ otp: "Invalid OTP" });
@@ -92,69 +89,64 @@ export default function Footer({ restaurantId,
     }
 
     try {
+      // ⭐ FINAL ORDER PAYLOAD
       const payload = {
         restaurant_id: Number(restaurantId),
         table_id: Number(tableId),
         name,
         phone,
+        order_note: orderNote || "", // ⭐ SEND ENTIRE ORDER NOTE
         items: cartItems.map((item) => ({
           menu_item_id: item.id,
           quantity: item.quantity,
+          item_note: notes[item.id] || "", // ⭐ SEND ITEM NOTE
         })),
       };
 
       await api.post("/public/order/create", payload);
 
-      // ✅ CLEAR CART
+      // Clear cart
       clearCart();
 
-      // ✅ RESET USER FORM
+      // Reset
       setName("");
       setPhone("");
       setOtp("");
       setOtpSent(false);
       setErrors({});
       setIsUserModalOpen(false);
+      setOrderNote("");
+      setNotes({});
 
-      // ✅ Generate updated token with phone
-
+      // Generate new token
       const newToken = btoa(
         encryptData({
           restaurant_id: Number(restaurantId),
-          phone, // ✅ important for history
-         restaurant_name: RestaurantName,
-    // table_no: table.number,   // only for dine-in
-    // table_id: table.id,
+          phone,
+          restaurant_name: RestaurantName,
         })
       );
 
       navigate(`/customerwebsite/orderhistory?token=${newToken}`);
-
-
-      // ✅ Redirect with updated token
-      // navigate(`/customerwebsite/orderhistory?token=${newToken}`);
     } catch (err) {
       console.error("ORDER ERROR:", err);
       alert("Order creation failed");
     }
   };
 
-
-
-
   return (
     <>
-      {/* ============= FOOTER NAVBAR ============= */}
+      {/* FOOTER NAV */}
       <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40">
         <div className="flex justify-around text-xs py-2">
           <button
             onClick={() => {
-              const params = new URLSearchParams(window.location.search);
-              const newToken = params.get("token");
+              const newToken = new URLSearchParams(window.location.search).get("token");
               navigate(`/customerwebsite?token=${newToken}`);
             }}
-            className={`flex flex-col items-center ${isActive("/customerwebsite") ? "text-orange-600" : "text-gray-500"
-              }`}
+            className={`flex flex-col items-center ${
+              isActive("/customerwebsite") ? "text-orange-600" : "text-gray-500"
+            }`}
           >
             <Home className="w-5 h-5" />
             <span>Home</span>
@@ -162,12 +154,12 @@ export default function Footer({ restaurantId,
 
           <button
             onClick={() => {
-              const params = new URLSearchParams(window.location.search);
-              const newToken = params.get("token");
+              const newToken = new URLSearchParams(window.location.search).get("token");
               navigate(`/customerwebsite/menu?token=${newToken}`);
             }}
-            className={`flex flex-col items-center ${isActive("/customerwebsite/menu") ? "text-orange-600" : "text-gray-500"
-              }`}
+            className={`flex flex-col items-center ${
+              isActive("/customerwebsite/menu") ? "text-orange-600" : "text-gray-500"
+            }`}
           >
             <Menu className="w-5 h-5" />
             <span>Menu</span>
@@ -175,14 +167,12 @@ export default function Footer({ restaurantId,
 
           <button
             onClick={() => {
-              const params = new URLSearchParams(window.location.search);
-              const newToken = params.get("token");
+              const newToken = new URLSearchParams(window.location.search).get("token");
               navigate(`/customerwebsite/orderhistory?token=${newToken}`);
             }}
-            className={`flex flex-col items-center ${isActive("/customerwebsite/orderhistory")
-                ? "text-orange-600"
-                : "text-gray-500"
-              }`}
+            className={`flex flex-col items-center ${
+              isActive("/customerwebsite/orderhistory") ? "text-orange-600" : "text-gray-500"
+            }`}
           >
             <Receipt className="w-5 h-5" />
             <span>Orders</span>
@@ -190,7 +180,7 @@ export default function Footer({ restaurantId,
         </div>
       </footer>
 
-      {/* ============= CART FLOATING TOAST ============= */}
+      {/* CART POPUP ICON */}
       {cartCount > 0 && (
         <div className="fixed bottom-16 left-0 right-0 px-5 flex justify-center z-50">
           <div className="flex items-center justify-between w-full max-w-sm px-5 py-3 rounded-full shadow-xl bg-white">
@@ -218,7 +208,7 @@ export default function Footer({ restaurantId,
         </div>
       )}
 
-      {/* ============= CART MODAL (UNCHANGED) ============= */}
+      {/* CART MODAL */}
       {isCartModalOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-[60] flex flex-col justify-end"
@@ -241,57 +231,63 @@ export default function Footer({ restaurantId,
               ) : (
                 cartItems.map((item) => (
                   <div key={item.id} className="bg-gray-50 p-4 rounded-xl border mb-3">
-  <div className="flex justify-between items-start mb-2">
-    
-    {/* ✅ Veg / Non-Veg + Name + Price */}
-    <div>
-      <div className="flex items-center gap-2">
-        {item.type === "veg" ? (
-          <span className="w-3 h-3 rounded-sm border border-green-600 flex items-center justify-center">
-            <span className="w-2 h-2 rounded-sm bg-green-600" />
-          </span>
-        ) : (
-          <span className="w-3 h-3 rounded-sm border border-red-600 flex items-center justify-center">
-            <span className="w-2 h-2 rounded-sm bg-red-600" />
-          </span>
-        )}
-        <p className="font-medium text-gray-800">{item.name}</p>
-      </div>
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          {item.type === "veg" ? (
+                            <span className="w-3 h-3 rounded-sm border border-green-600 flex items-center justify-center">
+                              <span className="w-2 h-2 rounded-sm bg-green-600" />
+                            </span>
+                          ) : (
+                            <span className="w-3 h-3 rounded-sm border border-red-600 flex items-center justify-center">
+                              <span className="w-2 h-2 rounded-sm bg-red-600" />
+                            </span>
+                          )}
+                          <p className="font-medium text-gray-800">{item.name}</p>
+                        </div>
 
-      {/* ✅ Price per item */}
-      <p className="text-xs text-gray-600 mt-1">₹{item.price}</p>
-    </div>
+                        <p className="text-xs text-gray-600 mt-1">₹{item.price}</p>
+                      </div>
 
-    {/* ✅ Quantity Controller */}
-    <div className="flex items-center gap-1 bg-white border px-2 py-1 rounded-full">
-      <button onClick={() => removeFromCart(item.id)}>
-        <Minus className="w-4 h-4 text-red-500" />
-      </button>
-      <span className="text-sm font-bold">{item.quantity}</span>
-      <button onClick={() => addToCart(item)}>
-        <Plus className="w-4 h-4 text-green-500" />
-      </button>
-    </div>
-  </div>
+                      <div className="flex items-center gap-1 bg-white border px-2 py-1 rounded-full">
+                        <button onClick={() => removeFromCart(item.id)}>
+                          <Minus className="w-4 h-4 text-red-500" />
+                        </button>
+                        <span className="text-sm font-bold">{item.quantity}</span>
+                        <button onClick={() => addToCart(item)}>
+                          <Plus className="w-4 h-4 text-green-500" />
+                        </button>
+                      </div>
+                    </div>
 
-  {/* ✅ Line Total */}
-  <div className="flex justify-between text-sm font-semibold text-gray-800 mb-2">
-    <span>Total</span>
-    <span>₹{item.price * item.quantity}</span>
-  </div>
+                    <div className="flex justify-between text-sm font-semibold text-gray-800 mb-2">
+                      <span>Total</span>
+                      <span>₹{item.price * item.quantity}</span>
+                    </div>
 
-  {/* ✅ Notes */}
-  <input
-    type="text"
-    placeholder="Add note..."
-    value={notes[item.id] || ""}
-    onChange={(e) => handleNoteChange(item.id, e.target.value)}
-    className="w-full px-3 py-2 border rounded-lg text-sm"
-  />
-</div>
-
+                    {/* ITEM NOTE */}
+                    <input
+                      type="text"
+                      placeholder="Add note..."
+                      value={notes[item.id] || ""}
+                      onChange={(e) => handleNoteChange(item.id, e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg text-sm"
+                    />
+                  </div>
                 ))
               )}
+            </div>
+
+            {/* ⭐ ORDER NOTE */}
+            <div className="px-4">
+              <label className="text-sm font-medium">Order Note</label>
+              <textarea
+                placeholder="Any special instructions? (e.g. no onion, extra spicy)"
+                value={orderNote}
+                onChange={(e) => setOrderNote(e.target.value)}
+                rows={2}
+                className="w-full border rounded-lg p-2 text-sm mt-1"
+              />
             </div>
 
             <div className="p-4 border-t flex justify-between">
@@ -310,7 +306,7 @@ export default function Footer({ restaurantId,
         </div>
       )}
 
-      {/* ✅ USER DETAILS + OTP MODAL */}
+      {/* USER OTP MODAL */}
       <UserDetailsWithOtpModal
         isOpen={isUserModalOpen}
         name={name}
