@@ -24,7 +24,7 @@ const MenuList = () => {
 
   // Delete mutation
   const deleteMutation = useMutation({
-    mutationFn: (id) => api.delete(`/restaurant/menus/${id}`),
+    mutationFn: (id) => api.delete(`/restaurant/menus/delete/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["menus"] });
     },

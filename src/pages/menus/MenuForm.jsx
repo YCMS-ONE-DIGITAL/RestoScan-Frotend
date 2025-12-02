@@ -21,7 +21,7 @@ const MenuForm = ({ menu, onClose }) => {
         return api.post(`/restaurant/menus/update/${menu.id}`, data);
       }
       // 👉 Creating
-      return api.post(`/restaurant/menus`, data);
+      return api.post(`/restaurant/menus/add`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries(["menus"]);
