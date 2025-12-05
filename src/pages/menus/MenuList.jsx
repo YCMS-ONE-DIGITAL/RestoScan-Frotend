@@ -5,11 +5,16 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useState } from "react";
 import MenuForm from "./MenuForm";
 import { Plus, Edit, Trash2, Loader2 } from "lucide-react";
+import ConfirmBox from "../../components/ConfirmBox";
+import toast from "react-hot-toast";
 
 const MenuList = () => {
   const queryClient = useQueryClient();
   const [selectedMenu, setSelectedMenu] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
+
 
   // Fetch menus
   const { data: menus = [], isLoading, error } = useQuery({
@@ -27,7 +32,11 @@ const MenuList = () => {
     mutationFn: (id) => api.delete(`/restaurant/menus/delete/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["menus"] });
+      toast.success("Menu Deleted Successfully");
     },
+    onError:()=>{
+      toast.error("Failed to Delete Menu")
+    }
   });
 
   const openForm = (menu = null) => {
@@ -133,9 +142,8 @@ const MenuList = () => {
                     variant="destructive"
                     className="flex-1"
                     onClick={() => {
-                      if (confirm(`Delete "${menu.name}" permanently?`)) {
-                        deleteMutation.mutate(menu.id);
-                      }
+                      setDeleteId(menu.id);
+                      setConfirmOpen(true);
                     }}
                     disabled={deleteMutation.isPending}
                   >
@@ -145,6 +153,7 @@ const MenuList = () => {
                       <Trash2 className="w-4 h-4" />
                     )}
                   </Button>
+
                 </div>
               </CardContent>
             </Card>
@@ -162,6 +171,23 @@ const MenuList = () => {
           }}
         />
       )}
+
+
+
+      <ConfirmBox
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        title="Delete Menu?"
+        message={
+          deleteId
+            ? `Are you sure you want to delete "${menus.find(m => m.id === deleteId)?.name || ""}"?`
+            : ""
+        }
+        onConfirm={() => {
+          deleteMutation.mutate(deleteId);
+          setConfirmOpen(false);
+        }}
+      />
     </div>
   );
 };

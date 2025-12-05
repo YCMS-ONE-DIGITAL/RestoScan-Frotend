@@ -1,4 +1,3 @@
-// src/CustomerWebsite/pages/OrderHistory.jsx
 import { useState, useEffect } from "react";
 import { Package, ShoppingBag, Clock, CheckCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -10,31 +9,37 @@ import { decryptData } from "@/utils/encryption";
 export default function OrderHistory() {
   const [activeTab, setActiveTab] = useState("orders");
   const [orders, setOrders] = useState([]);
+  const [decoded, setDecoded] = useState(null);
+
   const navigate = useNavigate();
   const { clearCart } = useCart();
 
+  // Clear cart
   useEffect(() => {
     clearCart();
   }, []);
 
+  // Decode token & save to state
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const token = params.get("token");
     if (!token) return;
 
-    let decoded;
     try {
-      decoded = decryptData(atob(token));
+      const d = decryptData(atob(token));
+      setDecoded(d);              // ⭐ MOST IMPORTANT
     } catch {
       console.error("Invalid token");
-      return;
     }
+  }, []);
 
-    if (!decoded.phone || !decoded.restaurant_id) return;
+  // Load orders when decoded ready
+  useEffect(() => {
+    if (!decoded?.phone || !decoded?.restaurant_id) return;
 
     const fetchOrders = async () => {
       try {
-        const res = await api.post("/public/order/orderhistory", {
+        const res = await api.post("/public/order-history", {
           phone: decoded.phone,
           restaurant_id: decoded.restaurant_id,
         });
@@ -46,10 +51,19 @@ export default function OrderHistory() {
     };
 
     fetchOrders();
-  }, []);
+  }, [decoded]);
+
+  if (!decoded) {
+    return (
+      <div className="flex justify-center items-center min-h-screen text-gray-600">
+        Loading your orders...
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+<div className="h-screen  bg-gray-50 pb-20">
+      {/* HEADER */}
       <header className="bg-white shadow-sm px-4 py-4 sticky top-0 z-40">
         <div className="flex items-center justify-between">
           <button onClick={() => navigate(-1)} className="text-gray-600 hover:text-gray-800">
@@ -60,7 +74,7 @@ export default function OrderHistory() {
         </div>
       </header>
 
-      {/* Tabs */}
+      {/* TABS */}
       <div className="bg-white border-b">
         <div className="flex">
           <button
@@ -87,8 +101,9 @@ export default function OrderHistory() {
         </div>
       </div>
 
-      {/* Content */}
-      <div className="px-4 py-4">
+      {/* CONTENT */}
+      <div className="px-4 py-4 overflow-y-auto"   style={{ height: "calc(100vh - 200px)" }}
+>                     <h5 className="center text-center">Refresh the page after sometime  to see the Order Status</h5>
         {activeTab === "orders" ? (
           <div className="space-y-4">
             {orders.length === 0 ? (
@@ -131,7 +146,6 @@ export default function OrderHistory() {
                       <p className="font-bold text-orange-600">₹{order.total_amount}</p>
                     </div>
 
-                    {/* ⭐ ORDER NOTE */}
                     {order.order_note && (
                       <p className="text-xs text-gray-500 mt-2">
                         📝 <span className="font-medium">Order Note:</span> {order.order_note}
@@ -144,44 +158,43 @@ export default function OrderHistory() {
           </div>
         ) : (
           <div className="space-y-3">
-            {orders.length === 0 ? (
-              <p className="text-center text-gray-500 py-12">No items ordered</p>
-            ) : (
-              orders.flatMap((order) =>
-                order.items.map((item) => (
-                  <div
-                    key={item.id}
-                    className="bg-white rounded-lg p-3 shadow-sm border border-gray-100 flex justify-between items-center"
-                  >
-                    <div>
-                      <p className="font-medium text-gray-800">{item.menu_item.name}</p>
-                      <p className="text-xs text-gray-500">Order #{order.id}</p>
+            {orders.flatMap((order) =>
+              order.items.map((item) => (
+                <div
+                  key={item.id}
+                  className="bg-white rounded-lg p-3 shadow-sm border border-gray-100 flex justify-between items-center"
+                >
+                  <div>
+                    <p className="font-medium text-gray-800">{item.menu_item.name}</p>
+                    <p className="text-xs text-gray-500">Order #{order.id}</p>
 
-                      {/* ⭐ ITEM NOTE */}
-                      {item.item_note && (
-                        <p className="text-xs text-gray-500 mt-1">
-                          📝 Note: {item.item_note}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="text-right">
-                      <p className="text-sm font-medium text-gray-700">
-                        {item.quantity} × ₹{item.price}
-                      </p>
-                      <p className="text-sm font-bold text-orange-600">
-                        ₹{item.quantity * item.price}
-                      </p>
-                    </div>
+                    {item.item_note && (
+                      <p className="text-xs text-gray-500 mt-1">📝 Note: {item.item_note}</p>
+                    )}
                   </div>
-                ))
-              )
+
+                  <div className="text-right">
+                    <p className="text-sm font-medium text-gray-700">
+                      {item.quantity} × ₹{item.price}
+                    </p>
+                    <p className="text-sm font-bold text-orange-600">
+                      ₹{item.quantity * item.price}
+                    </p>
+                  </div>
+                </div>
+              ))
             )}
           </div>
         )}
       </div>
 
-      <Footer />
+      {/* FOOTER */}
+      <Footer
+        restaurantId={decoded.restaurant_id}
+        restaurantName={decoded.restaurant_name}
+        tableNo={decoded.table_no}
+        tableId={decoded.table_id}
+      />
     </div>
   );
 }

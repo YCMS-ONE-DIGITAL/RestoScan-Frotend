@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/api";
+import toast from "react-hot-toast";
+
 
 export default function AddRestaurant() {
   const navigate = useNavigate();
@@ -32,11 +34,14 @@ export default function AddRestaurant() {
       });
 
       if (res.data.status === "success") {
-        alert("Restaurant saved successfully!");
+        // alert("Restaurant saved successfully!");
+          toast.success("Restaurant saved successfully!")
+
         window.location.href = "/dashboard";
       }
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to save restaurant");
+      // alert(err.response?.data?.message || "Failed to save restaurant");
+      toast.error("failed to Saved Restaurant")
     }
   };
 

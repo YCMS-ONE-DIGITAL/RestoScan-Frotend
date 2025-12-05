@@ -6,6 +6,7 @@ import Sidebar from "./Sidebar";
 import Topbar from "./TopBar";
 import api from "@/api/api";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import TopToaster from "../TopToaster";
 
 export default function DashboardLayout() {
   const [open, setOpen] = useState(false);
@@ -34,6 +35,7 @@ export default function DashboardLayout() {
 
   return (
     <div className="flex bg-[#0E1421] text-white h-screen overflow-hidden">
+              <TopToaster />
 
       {/* ✅ Sidebar - Desktop */}
       <div className="hidden md:block w-64">

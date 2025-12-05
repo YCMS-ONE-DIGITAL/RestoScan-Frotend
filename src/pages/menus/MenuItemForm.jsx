@@ -4,6 +4,8 @@ import api from "@/api/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import toast from "react-hot-toast";
+
 
 export default function MenuItemsForm({
   item,
@@ -32,11 +34,11 @@ export default function MenuItemsForm({
       setCategoryId(item.category_id?.toString() || "");
       setType(item.type || "veg");
       setPrice(item.price?.toString() || "");
-setImagePreview(
-  item.image 
-    ? "http://localhost:8000/storage/" + item.image 
-    : null
-);
+      setImagePreview(
+        item.image
+          ? "http://localhost:8000/storage/" + item.image
+          : null
+      );
       setIsAvailable(item.is_available ?? true);
       setImageFile(null);
     } else {
@@ -61,7 +63,7 @@ setImagePreview(
   }, [imagePreview]);
 
   // FINAL IMAGE UPLOAD FUNCTION
-  const uploadImage = async () => {
+const uploadImage = async () => {
   if (!imageFile) return null;
 
   const formData = new FormData();
@@ -75,11 +77,18 @@ setImagePreview(
       { headers: { "Content-Type": "multipart/form-data" } }
     );
 
-    console.log("Uploaded filename:", res.data.filename);
+    // ⭐ SUCCESS TOAST
+    toast.success("Image uploaded successfully!");
 
-    return res.data.filename;     // ⭐ backend मधून येणार "filename"
+    // console.log("Uploaded filename:", res.data.filename);
+
+    return res.data.filename; // filename returned by backend
   } catch (err) {
-    console.error("Upload failed:", err.response?.data || err);
+    // console.error("Upload failed:", err.response?.data || err);
+
+    // ⭐ ERROR TOAST
+    toast.error("Failed to upload image!");
+
     return null;
   }
 };
@@ -90,8 +99,12 @@ setImagePreview(
     mutationFn: (payload) => api.post("/restaurant/menu/item/add", payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["menuItems"] });
+      toast.success("Item Created successfully!");  // ⭐
       onClose();
     },
+    onError: () => {
+      toast.error("Failed to Create item");
+    }
   });
 
   const updateItem = useMutation({
@@ -99,8 +112,12 @@ setImagePreview(
       api.post(`/restaurant/menu/item/update/${payload.id}`, payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["menuItems"] });
+      toast.success("Item updated successfully!");  // ⭐
       onClose();
     },
+    onError: () => {
+      toast.error("Failed to update item");
+    }
   });
 
   // FINAL SUBMIT FUNCTION — येथे सगळी जादू आहे!
@@ -118,18 +135,18 @@ setImagePreview(
       finalImagePath = item.image;
     }
 
-    console.log("Final image path जो डेटाबेसमध्ये जाईल:", finalImagePath);
+    // console.log("Final image path जो डेटाबेसमध्ये जाईल:", finalImagePath);
 
     const payload = {
-  name,
-  description: description || null,
-  menu_id: Number(menuId),
-  category_id: Number(categoryId),
-  type,
-  price: Number(price),
-  image: finalImagePath, // ← फक्त filename जाईल
-  is_available: isAvailable,
-};
+      name,
+      description: description || null,
+      menu_id: Number(menuId),
+      category_id: Number(categoryId),
+      type,
+      price: Number(price),
+      image: finalImagePath, // ← फक्त filename जाईल
+      is_available: isAvailable,
+    };
 
 
 
@@ -143,139 +160,139 @@ setImagePreview(
   const isLoading = createItem.isPending || updateItem.isPending;
 
   return (
-   <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-  <Card className="w-full max-w-2xl bg-gray-900 text-white border-gray-800 max-h-[90vh] overflow-hidden">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <Card className="w-full max-w-2xl bg-gray-900 text-white border-gray-800 max-h-[90vh] overflow-hidden">
 
-    <CardHeader>
-      <CardTitle className="text-2xl">
-        {item ? "Edit Menu Item" : "Add New Item"}
-      </CardTitle>
-    </CardHeader>
+        <CardHeader>
+          <CardTitle className="text-2xl">
+            {item ? "Edit Menu Item" : "Add New Item"}
+          </CardTitle>
+        </CardHeader>
 
-    {/* FORM SCROLL CONTAINER → prevents overflow issues */}
-    <div className="px-6 pb-6 overflow-y-auto max-h-[75vh]">
+        {/* FORM SCROLL CONTAINER → prevents overflow issues */}
+        <div className="px-6 pb-6 overflow-y-auto max-h-[75vh]">
 
-      <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-5">
 
-        {/* GRID FIELDS */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* GRID FIELDS */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-          <Input
-            placeholder="Item Name *"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            className="bg-gray-800 border-gray-700"
-          />
-
-          <Input
-            type="number"
-            step="0.01"
-            placeholder="Price *"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            required
-            className="bg-gray-800 border-gray-700"
-          />
-
-          <select
-            className="bg-gray-800 p-3 rounded-lg border border-gray-700 text-white"
-            value={menuId}
-            onChange={(e) => setMenuId(e.target.value)}
-          >
-            <option value="">Select Menu</option>
-            {menus?.map(m => (
-              <option key={m.id} value={m.id}>{m.name}</option>
-            ))}
-          </select>
-
-          <select
-            className="bg-gray-800 p-3 rounded-lg border border-gray-700 text-white"
-            value={categoryId}
-            onChange={(e) => setCategoryId(e.target.value)}
-          >
-            <option value="">Select Category</option>
-            {categories?.map(c => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
-
-          <select
-            className="bg-gray-800 p-3 rounded-lg border border-gray-700 text-white"
-            value={type}
-            onChange={(e) => setType(e.target.value)}
-          >
-            <option value="veg">Veg</option>
-            <option value="non_veg">Non-Veg</option>
-            <option value="egg">Egg</option>
-          </select>
-
-          <div className="flex items-center bg-gray-800 px-4 py-3 rounded-lg border border-gray-700">
-            <input
-              type="checkbox"
-              checked={isAvailable}
-              onChange={(e) => setIsAvailable(e.target.checked)}
-              className="w-5 h-5 mr-3"
-            />
-            <span className="text-lg">Available</span>
-          </div>
-        </div>
-
-        {/* DESCRIPTION */}
-        <textarea
-          className="w-full bg-gray-800 p-4 rounded-lg border h-full border-gray-700"
-          rows={3}
-          placeholder="Description (optional)"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-        />
-
-        {/* IMAGE UPLOAD */}
-        <div>
-          <label className="block text-sm font-medium mb-2">Item Image</label>
-            <div className="flex justify-arround">
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) {
-                if (imagePreview?.startsWith("blob:")) URL.revokeObjectURL(imagePreview);
-                setImageFile(file);
-                setImagePreview(URL.createObjectURL(file));
-              }
-            }}
-            className="w-full text-gray-300 file:bg-gray-700 file:text-white file:px-4 file:py-2 file:rounded-lg"
-          />
-
-          {imagePreview && (
-            <div className="mt-4">
-              <img
-                src={imagePreview}
-                alt="Preview"
-                className="w-[50px] max-h-40 object-fit rounded-lg border border-gray-700"
+              <Input
+                placeholder="Item Name *"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                className="bg-gray-800 border-gray-700"
               />
+
+              <Input
+                type="number"
+                step="0.01"
+                placeholder="Price *"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                required
+                className="bg-gray-800 border-gray-700"
+              />
+
+              <select
+                className="bg-gray-800 p-3 rounded-lg border border-gray-700 text-white"
+                value={menuId}
+                onChange={(e) => setMenuId(e.target.value)}
+              >
+                <option value="">Select Menu</option>
+                {menus?.map(m => (
+                  <option key={m.id} value={m.id}>{m.name}</option>
+                ))}
+              </select>
+
+              <select
+                className="bg-gray-800 p-3 rounded-lg border border-gray-700 text-white"
+                value={categoryId}
+                onChange={(e) => setCategoryId(e.target.value)}
+              >
+                <option value="">Select Category</option>
+                {categories?.map(c => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+
+              <select
+                className="bg-gray-800 p-3 rounded-lg border border-gray-700 text-white"
+                value={type}
+                onChange={(e) => setType(e.target.value)}
+              >
+                <option value="veg">Veg</option>
+                <option value="non_veg">Non-Veg</option>
+                <option value="egg">Egg</option>
+              </select>
+
+              <div className="flex items-center bg-gray-800 px-4 py-3 rounded-lg border border-gray-700">
+                <input
+                  type="checkbox"
+                  checked={isAvailable}
+                  onChange={(e) => setIsAvailable(e.target.checked)}
+                  className="w-5 h-5 mr-3"
+                />
+                <span className="text-lg">Available</span>
+              </div>
             </div>
-          )}
+
+            {/* DESCRIPTION */}
+            <textarea
+              className="w-full bg-gray-800 p-4 rounded-lg border h-full border-gray-700"
+              rows={3}
+              placeholder="Description (optional)"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+
+            {/* IMAGE UPLOAD */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Item Image</label>
+              <div className="flex justify-arround">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      if (imagePreview?.startsWith("blob:")) URL.revokeObjectURL(imagePreview);
+                      setImageFile(file);
+                      setImagePreview(URL.createObjectURL(file));
+                    }
+                  }}
+                  className="w-full text-gray-300 file:bg-gray-700 file:text-white file:px-4 file:py-2 file:rounded-lg"
+                />
+
+                {imagePreview && (
+                  <div className="mt-4">
+                    <img
+                      src={imagePreview}
+                      alt="Preview"
+                      className="w-[50px] max-h-40 object-fit rounded-lg border border-gray-700"
+                    />
+                  </div>
+                )}
 
 
-          </div>
+              </div>
+            </div>
+
+            {/* BUTTONS */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-end pt-4">
+              <Button variant="outline" className="text-gray-800" onClick={onClose} disabled={isLoading}>
+                Cancel
+              </Button>
+              <Button className="bg-green-600 hover:bg-green-700" disabled={isLoading}>
+                {isLoading ? "Saving..." : item ? "Update Item" : "Create Item"}
+              </Button>
+            </div>
+
+          </form>
         </div>
-
-        {/* BUTTONS */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-end pt-4">
-          <Button variant="outline" className="text-gray-800" onClick={onClose} disabled={isLoading}>
-            Cancel
-          </Button>
-          <Button className="bg-green-600 hover:bg-green-700" disabled={isLoading}>
-            {isLoading ? "Saving..." : item ? "Update Item" : "Create Item"}
-          </Button>
-        </div>
-
-      </form>
+      </Card>
     </div>
-  </Card>
-</div>
 
   );
 }

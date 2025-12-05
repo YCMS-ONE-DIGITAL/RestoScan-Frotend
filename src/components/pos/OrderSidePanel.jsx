@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import api from "@/api/api";
+import toast from "react-hot-toast";
+import { playSound } from "../Playsound";
 
 export default function OrderSidePanel({ order }) {
   const [orderData, setOrderData] = useState({
@@ -72,10 +74,10 @@ export default function OrderSidePanel({ order }) {
 
   // CREATE ORDER API
   const createOrder = async () => {
-    if (!orderData.items.length) return alert("No items added!");
+    if (!orderData.items.length) return toast.error("No items added!");
 
     if (orderData.order_type === "dine_in" && !orderData.table_id)
-      return alert("Please select a table");
+      return toast.error("Please select a table");
 
     try {
       const payload = {
@@ -92,7 +94,8 @@ export default function OrderSidePanel({ order }) {
       };
 
       await api.post("/restaurant/orders/create", payload);
-      alert("Order created!");
+      playSound();
+      toast.success("order Created successfully")
 
       // reset
       setOrderData({
@@ -105,8 +108,9 @@ export default function OrderSidePanel({ order }) {
         order_note: "",
       });
     } catch (err) {
-      console.error(err);
-      alert("Order creation failed");
+      // console.error(err);
+      // alert("Order creation failed");
+      toast.error("Order Creation Failed")
     }
   };
 

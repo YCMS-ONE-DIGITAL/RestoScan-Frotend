@@ -67,7 +67,7 @@ const POS = () => {
           </select>
         </div>
 
-        <CategoryFilter setFilterCat={setFilterCat} />
+        <CategoryFilter filterCat={filterCat} setFilterCat={setFilterCat} />
 
         <MenuGrid
           search={search}

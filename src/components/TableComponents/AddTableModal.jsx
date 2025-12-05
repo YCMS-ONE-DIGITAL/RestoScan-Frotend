@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import api from "@/api/api";
+import toast from "react-hot-toast";   // ✅ ADD THIS
 
 export default function AddEditTableModal({ isOpen, onClose, onSave, editTable, restaurantId }) {
   const [tableData, setTableData] = useState({
     number: "",
     capacity: "",
-    // location: "",
     status: "Available",
   });
 
@@ -18,13 +18,10 @@ export default function AddEditTableModal({ isOpen, onClose, onSave, editTable, 
       setTableData({
         number: editTable.table_no,
         capacity: editTable.seating_number,
-        // location: editTable.location ?? "",
         status: "Available",
       });
     } else {
-      setTableData({ number: "", capacity: "", 
-        // location: "", 
-        status: "Available" });
+      setTableData({ number: "", capacity: "", status: "Available" });
     }
   }, [editTable]);
 
@@ -39,15 +36,15 @@ export default function AddEditTableModal({ isOpen, onClose, onSave, editTable, 
     if (!tableData.number.trim()) newErrors.number = "Table Number required";
     if (!tableData.capacity) newErrors.capacity = "Capacity required";
     if (tableData.capacity < 1) newErrors.capacity = "Minimum 1 seat";
-    // if (!tableData.location.trim()) newErrors.location = "Location required";
     return newErrors;
   };
 
-  // ⭐ Backend Submit
+  // ⭐ Backend Submit with Toast
   const handleSubmit = async () => {
     const validationErrors = validateForm();
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
+      toast.error("Please fix the errors");  // ❌ validation error toast
       return;
     }
 
@@ -59,6 +56,7 @@ export default function AddEditTableModal({ isOpen, onClose, onSave, editTable, 
           table_no: tableData.number,
           seating_number: tableData.capacity,
         });
+        toast.success("Table Updated Successfully ✅"); // ⭐ SUCCESS TOAST
       } else {
         // ➤ ADD
         await api.post("/restaurant/table/add", {
@@ -66,13 +64,15 @@ export default function AddEditTableModal({ isOpen, onClose, onSave, editTable, 
           table_no: tableData.number,
           seating_number: tableData.capacity,
         });
+        toast.success("New Table Added Successfully 🎉"); // ⭐ SUCCESS TOAST
       }
 
-      onSave(); // refresh list
+      onSave();  
       onClose();
 
     } catch (err) {
       console.log("Error:", err);
+      toast.error("Something went wrong ❌"); // ❌ ERROR TOAST
     }
   };
 
@@ -113,18 +113,6 @@ export default function AddEditTableModal({ isOpen, onClose, onSave, editTable, 
           />
           {errors.capacity && <p className="text-red-500 text-sm">{errors.capacity}</p>}
         </div>
-{/* 
-        <div className="mb-3">
-          <input
-            type="text"
-            name="location"
-            placeholder="Location"
-            value={tableData.location}
-            onChange={handleChange}
-            className="w-full border px-3 py-2 rounded mb-3 text-gray-900 bg-white"
-          />
-          {errors.location && <p className="text-red-500 text-sm">{errors.location}</p>}
-        </div> */}
 
         <button
           className="bg-green-600 text-white w-full py-2 rounded font-semibold"

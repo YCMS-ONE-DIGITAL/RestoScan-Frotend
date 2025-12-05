@@ -1,10 +1,13 @@
-import React, { useState } from "react";
+import React, { useState,useRef,useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/api/api";
+import toast from "react-hot-toast";
+
 
 import OrderCard from "../components/DashboardComponents/OrderCard";
 import OrderSidePanelOrders from "../components/pos/OrderSidePanelOrders";
+import { playSound } from "../components/Playsound";
 
 export default function KOT() {
   const navigate = useNavigate();
@@ -20,6 +23,11 @@ export default function KOT() {
 
   // ✅ Pagination State
   const [page, setPage] = useState(1);
+
+  // ⭐ NEW ORDER DETECTOR FOR KOT PAGE
+const lastKotCount = useRef(null);
+
+
 
   // ✅ Fetch orders based on filters + pagination
   const { data, isLoading } = useQuery({
@@ -38,13 +46,40 @@ export default function KOT() {
   const orders = data?.data ?? [];
   const pagination = data?.pagination ?? {};
 
+
+  
+useEffect(() => {
+  if (!orders) return;
+
+  const kotOnly = orders.filter(o => o.status === "kot");
+  const current = kotOnly.length;
+
+  // first load – don't alert
+  if (lastKotCount.current === null) {
+    lastKotCount.current = current;
+    return;
+  }
+
+  // NEW KOT ARRIVED 🔥
+  if (current > lastKotCount.current) {
+    playSound();
+    toast.success("🧾 New KOT Received!");
+  }
+
+  lastKotCount.current = current;
+}, [orders]);
   // ✅ Update Order
   const updateOrder = useMutation({
     mutationFn: (payload) => api.post("/restaurant/orders/update", payload),
     onSuccess: () => {
       qc.invalidateQueries(["kotOrders"]);
+      playSound()
+      toast.success("Order updated Successfully")
       setOpenPanel(false);
     },
+    onError:()=>{
+      toast.error("Failed to Update Order")
+    }
   });
 
   const handleSaveOrder = (updatedOrder, deletedItems = []) => {

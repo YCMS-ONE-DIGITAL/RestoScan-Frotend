@@ -4,7 +4,7 @@ import api from "@/api/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
+import toast from "react-hot-toast";
 const CategoryForm = ({ category, onClose }) => {
   const [name, setName] = useState("");
   const [imageFile, setImageFile] = useState(null);
@@ -37,9 +37,14 @@ const CategoryForm = ({ category, onClose }) => {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
+    toast.success("Image uploaded successfully!");
+
       return res.data.filename;
+
     } catch (err) {
-      console.log("Upload failed", err);
+      //  console.log("Upload failed", err);
+          toast.error("Failed to upload image!");
+
       return null;
     }
   };
@@ -53,8 +58,16 @@ const CategoryForm = ({ category, onClose }) => {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["categories"] });
+       if (category) {
+      toast.success("Category updated successfully!");
+    } else {
+      toast.success("Category created successfully!");
+    }
       onClose();
     },
+    onError: () => {
+    toast.error("Failed to save Category!");
+  }
   });
 
   const handleSubmit = async (e) => {

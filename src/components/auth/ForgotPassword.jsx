@@ -1,5 +1,6 @@
 import { useState } from "react";
 import api from "../../api/api";
+import toast from "react-hot-toast";
 
 export default function ForgotPassword() {
   const [step, setStep] = useState(1);  
@@ -19,14 +20,18 @@ export default function ForgotPassword() {
 
       if (res.data.status === "success") {
         // OPTIONAL: backend OTP show करत असेल तर store करू शकतो
-        console.log("OTP:", res.data.token || res.data.otp);
+        // console.log("OTP:", res.data.token || res.data.otp);
 
         setStep(2);
       } else {
-        alert(res.data.message);
+        // alert(res.data.message);
+                          toast.error(res.data.message)
+
       }
     } catch {
-      alert("Failed to send OTP");
+      // alert("Failed to send OTP");
+                        toast.error("Failed to send OTP")
+
     }
 
     setLoading(false);
@@ -45,10 +50,14 @@ export default function ForgotPassword() {
       if (res.data.status === "success") {
         setStep(3);
       } else {
-        alert(res.data.message);
+        // alert(res.data.message);
+                          toast.error(res.data.message)
+
       }
     } catch {
-      alert("Invalid OTP");
+      // alert("Invalid OTP");
+                        toast.error("Invalid OTP")
+
     }
 
     setLoading(false);
@@ -66,14 +75,20 @@ export default function ForgotPassword() {
       });
 
       if (res.data.status === "success") {
-        alert("Password changed successfully!");
+        // alert("Password changed successfully!");
+                          toast.success("Password changed successfully!")
+
         window.location.href = "/login";
       } else {
-        alert(res.data.message);
+        // alert(res.data.message);
+                          toast.error(res.data.message)
+
       }
     } catch (err) {
-    console.log(err.response?.data);
-    alert(err.response?.data?.message || "Failed to reset password");
+    // console.log(err.response?.data);
+    // alert(err.response?.data?.message || "Failed to reset password");
+    toast.error("Failed to reset password")
+
 }
 
 

@@ -13,6 +13,9 @@ import AddEditTableModal from "../components/TableComponents/AddTableModal";
 import QRModal from "../components/TableComponents/QRmodal"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/api/api";
+import ConfirmBox from "../components/ConfirmBox";
+import toast from "react-hot-toast";
+import { Loader2, Trash2 } from "lucide-react";
 
 export default function TableList() {
   const qc = useQueryClient();
@@ -20,6 +23,9 @@ export default function TableList() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editTable, setEditTable] = useState(null);
   const [selectedTableForQR, setSelectedTableForQR] = useState(null);
+  
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
 
   // ⭐ Fetch restaurant
   const { data: restaurant } = useQuery({
@@ -39,13 +45,22 @@ export default function TableList() {
       );
       return res.data.data;
     },
+
     enabled: !!restaurant,
   });
 
   // ⭐ Delete
   const deleteMutation = useMutation({
     mutationFn: (id) => api.delete(`/restaurant/table/delete/${id}`),
-    onSuccess: () => qc.invalidateQueries(["tables"]),
+    onSuccess: () => {
+      qc.invalidateQueries(["tables"])
+      toast.success("Table Deleted Successfully")
+    },
+
+    onError: () => {
+      toast.success("Failed To  Delete Table")
+
+    }
   });
 
   return (
@@ -88,21 +103,30 @@ export default function TableList() {
                 </Button>
 
                 <Button
-                  size="sm"
-                  variant="destructive"
-                  onClick={() => deleteMutation.mutate(table.id)}
-                >
-                  Delete
-                </Button>
+                    variant="destructive"
+                    className="flex"
+                    onClick={() => {
+                      setDeleteId(table.id);
+                      setConfirmOpen(true);
+                    }}
+                    disabled={deleteMutation.isPending}
+                  >
+                    {deleteMutation.isPending ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-4 h-4" />
+                    )}
+                    Delete
+                  </Button>
 
-              <Button
-  size="sm"
-  className="bg-indigo-600 hover:bg-indigo-700"
-  onClick={() => restaurant && setSelectedTableForQR(table)}
-  disabled={!restaurant}
->
-  QR Code
-</Button>
+                <Button
+                  size="sm"
+                  className="bg-indigo-600 hover:bg-indigo-700"
+                  onClick={() => restaurant && setSelectedTableForQR(table)}
+                  disabled={!restaurant}
+                >
+                  QR Code
+                </Button>
               </CardFooter>
             </Card>
           ))}
@@ -130,6 +154,22 @@ export default function TableList() {
         table={selectedTableForQR}
         restaurant={restaurant}
       />
+
+
+       <ConfirmBox
+              open={confirmOpen}
+              onClose={() => setConfirmOpen(false)}
+              title="Delete Menu?"
+              message={
+                deleteId
+                  ? `Are you sure you want to delete "${tables.find(t => t.id === deleteId)?.table_no || ""}"?`
+                  : ""
+              }
+              onConfirm={() => {
+                deleteMutation.mutate(deleteId);
+                setConfirmOpen(false);
+              }}
+            />
     </div>
   );
 }

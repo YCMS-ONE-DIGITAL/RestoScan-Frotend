@@ -3,6 +3,7 @@ import { Eye, EyeOff, Mail, Phone } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import api from "../../api/api";
 import ForgotPassword from "../auth/ForgotPassword";
+import toast from "react-hot-toast";
 
 export default function AuthForm() {
   const navigate = useNavigate();
@@ -39,10 +40,13 @@ export default function AuthForm() {
         if (res.data.status === "success") {
           navigate("/dashboard");
         } else {
-          alert(res.data.message);
+          // alert(res.data.message);
+          toast.error(res.data.message)
         }
       } catch {
-        alert("Invalid email or password");
+        // alert("Invalid email or password");
+                    toast.error("Invalid email or password")
+
       }
 
       setLoading(false);
@@ -65,15 +69,20 @@ export default function AuthForm() {
         phone_number: formData.phone_number,  // ⭐ correct key
         password: formData.password,
       });
-      console.log(res)
+      // console.log(res)
 
       if (res.data.status === "success") {
         setIsOtpStage(true);
+
       } else {
-        alert(res.data.message);
+        // alert(res.data.message);
+                  toast.error(res.data.message)
+
       }
     } catch (err) {
-      alert(err?.response?.data?.message || "Failed to send OTP");
+      // alert(err?.response?.data?.message || "Failed to send OTP");
+                toast.error("Failed to send OTP")
+
     }
 
     setLoading(false);
@@ -95,11 +104,17 @@ export default function AuthForm() {
 
       if (res.data.status === "success") {
         navigate("/dashboard");
+                         toast.success("singup successfully")
+
       } else {
-        alert(res.data.message);
+        // alert(res.data.message);
+                          toast.error(res.data.message)
+
       }
     } catch {
-      alert("Invalid OTP");
+      // alert("Invalid OTP");
+                        toast.error("Invalid otp")
+
     }
 
     setLoading(false);

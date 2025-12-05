@@ -4,6 +4,7 @@ import api from "@/api/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import toast from "react-hot-toast";
 
 const MenuForm = ({ menu, onClose }) => {
   const [name, setName] = useState("");
@@ -15,18 +16,30 @@ const MenuForm = ({ menu, onClose }) => {
 
   // ADD + EDIT mutation
   const mutation = useMutation({
-    mutationFn: async (data) => {
-      // 👉 Editing
-      if (menu) {
-        return api.post(`/restaurant/menus/update/${menu.id}`, data);
-      }
-      // 👉 Creating
-      return api.post(`/restaurant/menus/add`, data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(["menus"]);
-      onClose();
-    },
+  mutationFn: async (data) => {
+    if (menu) {
+      return api.post(`/restaurant/menus/update/${menu.id}`, data);
+    }
+    return api.post(`/restaurant/menus/add`, data);
+  },
+
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ["menus"] });
+
+    if (menu) {
+      toast.success("Menu updated successfully!");
+    } else {
+      toast.success("Menu created successfully!");
+    }
+
+    // ⭐ FORM बंद करा – हे अत्यंत महत्वाचे!
+    onClose();
+  },
+
+  onError: () => {
+    toast.error("Failed to save menu!");
+  }
+
   });
 
   const handleSubmit = (e) => {

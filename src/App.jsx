@@ -27,12 +27,16 @@ import PublicRoute from "./components/PublicRoute";
 import ProtectedRoutes from "./components/ProtectedRoutes";
 import AddRestaurant from "./pages/AddRestaurant";
 import ForgotPassword from "./components/auth/ForgotPassword";
+import TopToaster from "./components/TopToaster";
 
 const allPageRouter = createBrowserRouter([
   // ===========================
   // Customer Website Routes
   // ===========================
+  
   {
+
+
     path: "/customerwebsite",
     element: <CustomerWebsite />,
   },
@@ -111,6 +115,8 @@ const allPageRouter = createBrowserRouter([
 function App() {
   return (
     <div className="App">
+          <TopToaster />      {/* ⭐ आता दोन्ही ठिकाणी toast चालेल */}
+
       <RouterProvider router={allPageRouter} />
     </div>
   );

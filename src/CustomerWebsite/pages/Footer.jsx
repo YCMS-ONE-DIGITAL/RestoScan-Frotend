@@ -1,114 +1,163 @@
+// Footer.jsx
 import { useState } from "react";
-import {
-  ShoppingCart,
-  Home,
-  Menu,
-  Receipt,
-  X,
-  Plus,
-  Minus,
-} from "lucide-react";
+import { ShoppingCart, Home, Menu, Receipt } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useCart } from "../context/CardContext";
 import api from "@/api/api";
 import { encryptData } from "@/utils/encryption";
+import UserDetailsModal from "../Components/UserDetailsModal";
+import toast from "react-hot-toast";
 
-import UserDetailsWithOtpModal from "../Components/UserDetailsModal";
-
-export default function Footer({ restaurantId, tableNo, tableId, RestaurantName }) {
+export default function Footer({
+  restaurantId,
+  tableNo,
+  tableId,
+  restaurantName,
+}) {
   const {
     cartItems,
     cartCount,
-    total,
-    addToCart,
-    removeFromCart,
     updateNote,
     clearCart,
   } = useCart();
 
-  const [isCartModalOpen, setIsCartModalOpen] = useState(false);
-  const [showConfirmClear, setShowConfirmClear] = useState(false);
-
-  // USER FORM + OTP
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [errors, setErrors] = useState({});
+  const [otpTimer, setOtpTimer] = useState(30);
+  const [canResend, setCanResend] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [notes, setNotes] = useState({}); // item notes
-  const [orderNote, setOrderNote] = useState(""); // ⭐ entire order note
+  const [notes, setNotes] = useState({});
+  const [orderNote, setOrderNote] = useState("");
 
   const isActive = (targetPath) => location.pathname === targetPath;
 
-  // ITEM NOTE CHANGE
+  const getToken = () => {
+    const urlToken = new URLSearchParams(window.location.search).get("token");
+    if (urlToken) {
+      try {
+        localStorage.setItem("cw_token", urlToken);
+      } catch (e) {}
+      return urlToken;
+    }
+    return localStorage.getItem("cw_token") || null;
+  };
+
   const handleNoteChange = (id, value) => {
     setNotes((prev) => ({ ...prev, [id]: value }));
     updateNote?.(id, value);
   };
 
-  // OPEN USER DETAILS FORM
   const handlePlaceOrder = () => {
     if (cartCount === 0) return;
-    setIsCartModalOpen(false);
     setIsUserModalOpen(true);
   };
 
-  // SEND OTP
-  const handleSendOtp = () => {
+  // ⛔ SEND OTP
+  const handleSendOtp = async () => {
     if (!name || !phone) {
-      setErrors({ phone: "Name & Phone Number Required" });
-      return;
-    }
-    setErrors({});
-    setOtpSent(true);
-  };
-
-  // VERIFY OTP + SEND ORDER TO BACKEND
-  const handleVerifyOtp = async () => {
-    if (otp !== "1234") {
-      setErrors({ otp: "Invalid OTP" });
+      setErrors({ phone: "Name & Phone is required" });
       return;
     }
 
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get("token");
-
-    if (!token) {
-      alert("Token missing!");
-      return;
-    }
-
-    if (!restaurantId || !tableId) {
-      alert("Something went wrong. Table/Restaurant missing.");
+    if (!restaurantId) {
+      setErrors({ phone: "Restaurant missing. Re-scan QR." });
       return;
     }
 
     try {
-      // ⭐ FINAL ORDER PAYLOAD
+      const res = await api.post("/public/send-otp", {
+        phone,
+        restaurant_id: Number(restaurantId),
+      });
+
+      if (res.data?.already_verified) {
+        return handleVerifyOtp(true);
+      }
+
+      // Start Timer
+      setOtpSent(true);
+      setErrors({});
+      setOtpTimer(30);
+      setCanResend(false);
+
+      let timer = setInterval(() => {
+        setOtpTimer((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            setCanResend(true);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } catch (err) {
+      console.error("OTP SEND ERROR:", err);
+      setErrors({ phone: err?.response?.data?.message || "OTP send failed" });
+    }
+  };
+
+  // 🔥 VERIFY OTP + PLACE ORDER
+  const handleVerifyOtp = async (skipOtp = false) => {
+    console.log("🔴 handleVerifyOtp CALLED, OTP=", otp);
+
+    try {
+      // OTP CHECK
+      if (!skipOtp && otp.length !== 4) {
+        setErrors({ otp: "Enter valid 4-digit OTP" });
+        return;
+      }
+
+      // 🔥 VERIFY OTP FIRST
+      console.log("🔥 ABOUT TO CALL VERIFY OTP");
+
+      if (!skipOtp) {
+        await api.post("/public/verify-otp", {
+          phone,
+          otp,
+          restaurant_id: Number(restaurantId),
+        });
+        console.log("🔥 OTP VERIFIED SUCCESS");
+      }
+
+      // VALIDATE TABLE + CART
+      if (!restaurantId || !tableId) {
+        setErrors({ form: "Table/Restaurant missing. Re-scan QR." });
+        return;
+      }
+
+      if (!Array.isArray(cartItems) || cartItems.length === 0) {
+        setErrors({ form: "Cart empty" });
+        return;
+      }
+
+      // ORDER PAYLOAD
       const payload = {
         restaurant_id: Number(restaurantId),
         table_id: Number(tableId),
         name,
         phone,
-        order_note: orderNote || "", // ⭐ SEND ENTIRE ORDER NOTE
+        order_note: orderNote,
         items: cartItems.map((item) => ({
           menu_item_id: item.id,
           quantity: item.quantity,
-          item_note: notes[item.id] || "", // ⭐ SEND ITEM NOTE
+          item_note: notes[item.id] || "",
         })),
       };
 
-      await api.post("/public/order/create", payload);
+      console.log("ORDER PAYLOAD:", payload);
 
-      // Clear cart
+      // PLACE ORDER
+      await api.post("/public/order", payload);
+      toast.success("Order Placed Successfully ")
+      // CLEANUP
       clearCart();
-
-      // Reset
       setName("");
       setPhone("");
       setOtp("");
@@ -118,19 +167,23 @@ export default function Footer({ restaurantId, tableNo, tableId, RestaurantName 
       setOrderNote("");
       setNotes({});
 
-      // Generate new token
       const newToken = btoa(
         encryptData({
           restaurant_id: Number(restaurantId),
           phone,
-          restaurant_name: RestaurantName,
+          restaurant_name: restaurantName,
+          table_id: tableId,
+          table_no: tableNo,
         })
       );
 
+      localStorage.setItem("cw_token", newToken);
       navigate(`/customerwebsite/orderhistory?token=${newToken}`);
     } catch (err) {
-      console.error("ORDER ERROR:", err);
-      alert("Order creation failed");
+      console.error("VERIFY/ORDER ERROR:", err);
+      setErrors({
+        otp: err?.response?.data?.message || "OTP verification failed",
+      });
     }
   };
 
@@ -141,11 +194,13 @@ export default function Footer({ restaurantId, tableNo, tableId, RestaurantName 
         <div className="flex justify-around text-xs py-2">
           <button
             onClick={() => {
-              const newToken = new URLSearchParams(window.location.search).get("token");
-              navigate(`/customerwebsite?token=${newToken}`);
+              const t = getToken();
+              navigate(`/customerwebsite${t ? `?token=${t}` : ""}`);
             }}
             className={`flex flex-col items-center ${
-              isActive("/customerwebsite") ? "text-orange-600" : "text-gray-500"
+              isActive("/customerwebsite")
+                ? "text-orange-600"
+                : "text-gray-500"
             }`}
           >
             <Home className="w-5 h-5" />
@@ -154,11 +209,13 @@ export default function Footer({ restaurantId, tableNo, tableId, RestaurantName 
 
           <button
             onClick={() => {
-              const newToken = new URLSearchParams(window.location.search).get("token");
-              navigate(`/customerwebsite/menu?token=${newToken}`);
+              const t = getToken();
+              navigate(`/customerwebsite/menu${t ? `?token=${t}` : ""}`);
             }}
             className={`flex flex-col items-center ${
-              isActive("/customerwebsite/menu") ? "text-orange-600" : "text-gray-500"
+              isActive("/customerwebsite/menu")
+                ? "text-orange-600"
+                : "text-gray-500"
             }`}
           >
             <Menu className="w-5 h-5" />
@@ -167,11 +224,13 @@ export default function Footer({ restaurantId, tableNo, tableId, RestaurantName 
 
           <button
             onClick={() => {
-              const newToken = new URLSearchParams(window.location.search).get("token");
-              navigate(`/customerwebsite/orderhistory?token=${newToken}`);
+              const t = getToken();
+              navigate(`/customerwebsite/orderhistory${t ? `?token=${t}` : ""}`);
             }}
             className={`flex flex-col items-center ${
-              isActive("/customerwebsite/orderhistory") ? "text-orange-600" : "text-gray-500"
+              isActive("/customerwebsite/orderhistory")
+                ? "text-orange-600"
+                : "text-gray-500"
             }`}
           >
             <Receipt className="w-5 h-5" />
@@ -180,134 +239,27 @@ export default function Footer({ restaurantId, tableNo, tableId, RestaurantName 
         </div>
       </footer>
 
-      {/* CART POPUP ICON */}
+      {/* ORDER BUTTON */}
       {cartCount > 0 && (
         <div className="fixed bottom-16 left-0 right-0 px-5 flex justify-center z-50">
           <div className="flex items-center justify-between w-full max-w-sm px-5 py-3 rounded-full shadow-xl bg-white">
             <div className="flex items-center gap-2 text-sm text-orange-900">
               <ShoppingCart className="w-4 h-4" />
-              <span>
-                {cartCount} {cartCount === 1 ? "item" : "items"}
-              </span>
+              <span>{cartCount} items</span>
             </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setIsCartModalOpen(true)}
-                className="bg-orange-500 text-white text-xs font-bold px-3 py-1.5 rounded-full"
-              >
-                View Cart
-              </button>
-              <button
-                onClick={() => setShowConfirmClear(true)}
-                className="text-black p-1.5 rounded-full"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
+
+            <button
+              onClick={handlePlaceOrder}
+              className="bg-orange-500 text-white text-xs font-bold px-3 py-1.5 rounded-full"
+            >
+              Place Order
+            </button>
           </div>
         </div>
       )}
 
-      {/* CART MODAL */}
-      {isCartModalOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-[60] flex flex-col justify-end"
-          onClick={() => setIsCartModalOpen(false)}
-        >
-          <div
-            className="bg-white rounded-t-2xl flex flex-col max-h-[85vh] animate-slideUp"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="p-4 border-b flex justify-between">
-              <h2 className="font-semibold text-lg">Your Cart ({cartCount})</h2>
-              <button onClick={() => setIsCartModalOpen(false)}>
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto px-4 py-3">
-              {cartItems.length === 0 ? (
-                <p className="text-center text-gray-500">Your cart is empty</p>
-              ) : (
-                cartItems.map((item) => (
-                  <div key={item.id} className="bg-gray-50 p-4 rounded-xl border mb-3">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          {item.type === "veg" ? (
-                            <span className="w-3 h-3 rounded-sm border border-green-600 flex items-center justify-center">
-                              <span className="w-2 h-2 rounded-sm bg-green-600" />
-                            </span>
-                          ) : (
-                            <span className="w-3 h-3 rounded-sm border border-red-600 flex items-center justify-center">
-                              <span className="w-2 h-2 rounded-sm bg-red-600" />
-                            </span>
-                          )}
-                          <p className="font-medium text-gray-800">{item.name}</p>
-                        </div>
-
-                        <p className="text-xs text-gray-600 mt-1">₹{item.price}</p>
-                      </div>
-
-                      <div className="flex items-center gap-1 bg-white border px-2 py-1 rounded-full">
-                        <button onClick={() => removeFromCart(item.id)}>
-                          <Minus className="w-4 h-4 text-red-500" />
-                        </button>
-                        <span className="text-sm font-bold">{item.quantity}</span>
-                        <button onClick={() => addToCart(item)}>
-                          <Plus className="w-4 h-4 text-green-500" />
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="flex justify-between text-sm font-semibold text-gray-800 mb-2">
-                      <span>Total</span>
-                      <span>₹{item.price * item.quantity}</span>
-                    </div>
-
-                    {/* ITEM NOTE */}
-                    <input
-                      type="text"
-                      placeholder="Add note..."
-                      value={notes[item.id] || ""}
-                      onChange={(e) => handleNoteChange(item.id, e.target.value)}
-                      className="w-full px-3 py-2 border rounded-lg text-sm"
-                    />
-                  </div>
-                ))
-              )}
-            </div>
-
-            {/* ⭐ ORDER NOTE */}
-            <div className="px-4">
-              <label className="text-sm font-medium">Order Note</label>
-              <textarea
-                placeholder="Any special instructions? (e.g. no onion, extra spicy)"
-                value={orderNote}
-                onChange={(e) => setOrderNote(e.target.value)}
-                rows={2}
-                className="w-full border rounded-lg p-2 text-sm mt-1"
-              />
-            </div>
-
-            <div className="p-4 border-t flex justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Total Amount</p>
-                <p className="font-bold text-xl">₹{total}</p>
-              </div>
-              <button
-                onClick={handlePlaceOrder}
-                className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-full font-bold"
-              >
-                Place Order
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* USER OTP MODAL */}
-      <UserDetailsWithOtpModal
+      {/* OTP MODAL */}
+      <UserDetailsModal
         isOpen={isUserModalOpen}
         name={name}
         phone={phone}
@@ -316,6 +268,8 @@ export default function Footer({ restaurantId, tableNo, tableId, RestaurantName 
         setPhone={setPhone}
         setOtp={setOtp}
         otpSent={otpSent}
+        otpTimer={otpTimer}
+        canResend={canResend}
         errors={errors}
         onSendOtp={handleSendOtp}
         onVerifyOtp={handleVerifyOtp}

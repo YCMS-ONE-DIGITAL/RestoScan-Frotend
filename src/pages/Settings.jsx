@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import api from "@/api/api";
+import toast from "react-hot-toast";
 
 const Settings = () => {
   const [loading, setLoading] = useState(true);
@@ -65,15 +66,20 @@ const Settings = () => {
   const updateUser = async () => {
     try {
       await api.post("/user/update", user);
-      alert("Profile updated");
+      // alert("Profile updated");
+      toast.success("Profile Updated Successfully")
     } catch {
-      alert("Failed to update profile");
+      // alert("Failed to update profile");
+          toast.error("Failed to Update profile")
+
     }
   };
 
   const updatePassword = async () => {
     if (passwords.new_password !== passwords.confirm_password) {
-      alert("Passwords do not match!");
+      // alert("Passwords do not match!");
+            toast.error("Passwords do not match!")
+
       return;
     }
 
@@ -84,7 +90,9 @@ const Settings = () => {
         new_password_confirmation: passwords.confirm_password,
       });
 
-      alert("Password updated");
+      // alert("Password updated");
+            toast.success("Password Updated Successfully")
+
 
       setPasswords({
         current_password: "",
@@ -92,7 +100,9 @@ const Settings = () => {
         confirm_password: "",
       });
     } catch (err) {
-      alert("Incorrect current password");
+      // alert("Incorrect current password");
+            toast.error("Incorrect current password")
+
     }
   };
 
@@ -113,9 +123,13 @@ const Settings = () => {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      alert("Restaurant updated");
+      // alert("Restaurant updated");
+            toast.success("Restaurant Updated Successfully")
+
     } catch {
-      alert("Failed to update restaurant");
+      // alert("Failed to update restaurant");
+      toast.error("Failed to Updated Restaurant")
+
     }
   };
 
@@ -124,7 +138,8 @@ const Settings = () => {
       await api.get("/user/logout");
       window.location.href = "/login";
     } catch {
-      alert("Failed to logout");
+      // alert("Failed to logout");
+      toast.error("Failed to logout")
     }
   };
 

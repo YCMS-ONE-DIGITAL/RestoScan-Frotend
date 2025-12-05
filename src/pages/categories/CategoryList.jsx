@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import CategoryForm from "./CategoryForm";
 import { Plus, Edit, Trash2, Loader2 } from "lucide-react";
+import ConfirmBox from "../../components/ConfirmBox";
+import toast from "react-hot-toast";
 
 const baseURL = "http://localhost:8000/storage/";
 
@@ -12,6 +14,9 @@ const CategoryList = () => {
   const qc = useQueryClient();
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
 
   // Fetch categories
   const { data: categories = [], isLoading, error } = useQuery({
@@ -27,7 +32,11 @@ const CategoryList = () => {
     mutationFn: (id) => api.delete(`/restaurant/categories/${id}`),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["categories"] });
+      toast.success("Category Deleted Successfully ")
     },
+    onError:()=>{
+      toast.error("Failed to delete Category")
+    }
   });
 
   const openForm = (category = null) => {
@@ -116,21 +125,20 @@ const CategoryList = () => {
                 </Button>
 
                 <Button
-                  variant="destructive"
-                  className="flex-1"
-                  onClick={() => {
-                    if (confirm(`Delete "${cat.name}" permanently?`)) {
-                      deleteMutation.mutate(cat.id);
-                    }
-                  }}
-                  disabled={deleteMutation.isPending}
-                >
-                  {deleteMutation.isPending ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Trash2 className="w-4 h-4" />
-                  )}
-                </Button>
+                    variant="destructive"
+                    className="flex-1"
+                    onClick={() => {
+                      setDeleteId(cat.id);
+                      setConfirmOpen(true);
+                    }}
+                    disabled={deleteMutation.isPending}
+                  >
+                    {deleteMutation.isPending ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-4 h-4" />
+                    )}
+                  </Button>
               </div>
             </CardContent>
           </Card>
@@ -147,6 +155,21 @@ const CategoryList = () => {
           }}
         />
       )}
+
+       <ConfirmBox
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        title="Delete Cat?"
+        message={
+          deleteId
+            ? `Are you sure you want to delete "${categories.find(m => m.id === deleteId)?.name || ""}"?`
+            : ""
+        }
+        onConfirm={() => {
+          deleteMutation.mutate(deleteId);
+          setConfirmOpen(false);
+        }}
+      />
     </div>
   );
 };

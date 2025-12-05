@@ -20,6 +20,8 @@ export default function MenuPage() {
     { id: "all", name: "All", image: "/assets/customerwebsite/category/image.jpg" }
   ]);
 
+  // console.log(categories)
+
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -70,11 +72,12 @@ export default function MenuPage() {
     api
       .get(`/public/categories?restaurant_id=${restaurantId}`)
       .then((res) => {
+              console.log("CATEGORY RESPONSE:", res.data);  // 👈👈 THIS LINE HERE
+
         const formatted = res.data.map((cat) => ({
           id: cat.id,
           name: cat.name,
-          image:
-            getImageUrl(cat.image_url) 
+          image:getImageUrl(cat.image) 
         }));
 
         setCategories([

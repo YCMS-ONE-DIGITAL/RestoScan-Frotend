@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import OrderSidePanelOrders from "../components/pos/OrderSidePanelOrders";
 import OrderCard from "../components/DashboardComponents/OrderCard";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
+import { playSound } from "../components/Playsound";
 import api from "@/api/api";
 
 export default function Orders() {
@@ -40,7 +42,7 @@ export default function Orders() {
           startDate,
           endDate,
           status,          // ✅ now sending status
-          paymentStatus,   // ✅ now sending payment filter
+           payment_status: paymentStatus,   // ✅ now sending payment filter
         },
       });
       return res.data;
@@ -56,8 +58,14 @@ export default function Orders() {
     mutationFn: async (payload) => api.post("/restaurant/orders/update", payload),
     onSuccess: () => {
       qc.invalidateQueries(["orders"]);
+                  playSound();
+      toast.success("Order Updated Successfully")
       setOpenPanel(false);
+
     },
+    onError:()=>{
+      toast.error("Failed to update Order")
+    }
   });
 
   const handleSaveOrder = (updatedOrder, deletedItems = []) => {
