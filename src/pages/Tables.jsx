@@ -80,9 +80,17 @@ export default function TableList() {
             <Card key={table.id} className="bg-gray-800 text-white">
               <CardHeader className="flex justify-between">
                 <CardTitle>Table {table.table_no}</CardTitle>
-                {/* <span className="px-2 py-1 text-xs rounded-full bg-green-500/20 text-green-400">
-                  Available
-                </span> */}
+                <span   className={
+    table.status === "available"
+      ? "px-2 py-1 text-xs rounded-full bg-green-500/20 text-green-400"
+      : table.status === "occupied"
+      ? "px-2 py-1 text-xs rounded-full bg-red-500/20 text-red-400"
+      : "px-2 py-1 text-xs rounded-full bg-gray-500/20 text-gray-400"
+  }>
+                  {table.status}
+                </span>
+
+             
               </CardHeader>
 
               <CardContent>
@@ -137,6 +145,7 @@ export default function TableList() {
       {isModalOpen && (
         <AddEditTableModal
           isOpen={isModalOpen}
+          
           onClose={() => {
             setIsModalOpen(false);
             setEditTable(null);
@@ -169,6 +178,7 @@ export default function TableList() {
                 deleteMutation.mutate(deleteId);
                 setConfirmOpen(false);
               }}
+
             />
     </div>
   );

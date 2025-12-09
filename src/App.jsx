@@ -12,7 +12,7 @@ import Tables from "./pages/Tables";
 import MenuList from "./pages/menus/MenuList";
 import MenuItemsList from "./pages/menus/MenuItemList";
 import CategoryList from "./pages/categories/CategoryList";
-import Staff from "./pages/Staff";
+import Staff from "./pages/staff/Staff";
 import  Customers  from "./pages/Customers";
 import Payments from "./pages/payments/payments";
 import PaymentDue from "./pages/payments/paymentdue";

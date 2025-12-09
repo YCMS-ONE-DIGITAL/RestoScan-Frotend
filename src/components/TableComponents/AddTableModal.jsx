@@ -18,8 +18,7 @@ export default function AddEditTableModal({ isOpen, onClose, onSave, editTable, 
       setTableData({
         number: editTable.table_no,
         capacity: editTable.seating_number,
-        status: "Available",
-      });
+status: editTable.status,      });
     } else {
       setTableData({ number: "", capacity: "", status: "Available" });
     }
@@ -55,6 +54,7 @@ export default function AddEditTableModal({ isOpen, onClose, onSave, editTable, 
           table_id: editTable.id,
           table_no: tableData.number,
           seating_number: tableData.capacity,
+          status: tableData.status,
         });
         toast.success("Table Updated Successfully ✅"); // ⭐ SUCCESS TOAST
       } else {
@@ -63,6 +63,7 @@ export default function AddEditTableModal({ isOpen, onClose, onSave, editTable, 
           restaurant_id: restaurantId,
           table_no: tableData.number,
           seating_number: tableData.capacity,
+    status: tableData.status.toLowerCase(),
         });
         toast.success("New Table Added Successfully 🎉"); // ⭐ SUCCESS TOAST
       }
@@ -71,8 +72,9 @@ export default function AddEditTableModal({ isOpen, onClose, onSave, editTable, 
       onClose();
 
     } catch (err) {
-      console.log("Error:", err);
+      // console.log("Error:", err);
       toast.error("Something went wrong ❌"); // ❌ ERROR TOAST
+      // toast.error(err.errors); // ❌ ERROR TOAST
     }
   };
 
@@ -113,6 +115,20 @@ export default function AddEditTableModal({ isOpen, onClose, onSave, editTable, 
           />
           {errors.capacity && <p className="text-red-500 text-sm">{errors.capacity}</p>}
         </div>
+
+        <div className="mb-3">
+  <label className="text-sm text-gray-700">Status</label>
+  <select
+    name="status"
+    value={tableData.status}
+    onChange={handleChange}
+    className="w-full border px-3 py-2 rounded text-gray-900 bg-white mt-1"
+  >
+    <option value="available">Available</option>
+    <option value="occupied">Occupied</option>
+  </select>
+</div>
+
 
         <button
           className="bg-green-600 text-white w-full py-2 rounded font-semibold"

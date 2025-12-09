@@ -56,12 +56,12 @@ export default function AuthForm() {
     // ⭐ SIGNUP → SEND OTP
     try {
 
-      console.log("OTP SEND PAYLOAD:", {
-        name: formData.name,
-        email: formData.email,
-        phone_number: formData.phone_number,
-        password: formData.password,
-      });
+      // console.log("OTP SEND PAYLOAD:", {
+      //   name: formData.name,
+      //   email: formData.email,
+      //   phone_number: formData.phone_number,
+      //   password: formData.password,
+      // });
 
       const res = await api.post("/otp/send", {
         name: formData.name,
@@ -74,14 +74,15 @@ export default function AuthForm() {
       if (res.data.status === "success") {
         setIsOtpStage(true);
 
-      } else {
+      } 
+      else {
         // alert(res.data.message);
                   toast.error(res.data.message)
 
       }
     } catch (err) {
       // alert(err?.response?.data?.message || "Failed to send OTP");
-                toast.error("Failed to send OTP")
+toast.error(err?.response?.data?.message || "Failed to send OTP")
 
     }
 
