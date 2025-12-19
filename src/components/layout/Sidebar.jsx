@@ -8,7 +8,7 @@ import {
   UserStarIcon,
   Users,
   CreditCardIcon,
-  Settings
+  Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import api from "@/api/api";
@@ -33,12 +33,10 @@ export default function Sidebar({ onNavigate }) {
     const fetchRestaurant = async () => {
       try {
         const res = await api.get("/restaurant/show");
-
         if (res.data?.restaurant) {
           const r = res.data.restaurant;
-
           setRestaurantName(r.restaurant_name || "Restaurant");
-          setLogo(getImageUrl(r.logo_url));   // ⭐ Set Logo
+          setLogo(getImageUrl(r.logo_url));
         }
       } catch (err) {
         console.error("Restaurant fetch error:", err);
@@ -48,18 +46,47 @@ export default function Sidebar({ onNavigate }) {
     fetchRestaurant();
   }, []);
 
-  const handleNav = (id) => {
-    navigate(id);
+  const handleNav = (path) => {
+    navigate(path);
     if (onNavigate) onNavigate();
   };
 
-  return (
-    <aside className="w-full bg-[#121826] text-white h-screen overflow-y-auto p-4 flex flex-col">
+  const links = [
+    { id: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
 
+    {
+      id: "/dashboard/menus",
+      label: "Menu",
+      icon: Utensils,
+      children: [
+        { id: "/dashboard/menus", label: "Menus" },
+        { id: "/dashboard/menus/items", label: "Menu Items" },
+        { id: "/dashboard/menus/categories", label: "Item Categories" },
+      ],
+    },
+
+    {
+      id: "/dashboard/orders",
+      label: "Orders",
+      icon: Utensils,
+      children: [
+        { id: "/dashboard/orders", label: "Orders" },
+        { id: "/dashboard/orders/kot", label: "KOT" },
+      ],
+    },
+
+    { id: "/dashboard/tables", label: "Tables", icon: Table2 },
+    { id: "/dashboard/pos", label: "POS", icon: Table2 },
+    { id: "/dashboard/customers", label: "Customers", icon: Users },
+    { id: "/dashboard/staff", label: "Staff", icon: UserStarIcon },
+    { id: "/dashboard/payments", label: "Payments", icon: CreditCardIcon },
+    { id: "/dashboard/settings", label: "Setting", icon: Settings },
+  ];
+
+  return (
+    <aside className="w-full bg-[#121826] text-white overflow-y-auto p-4 flex flex-col">
       {/* ⭐ Restaurant Logo + Name */}
       <div className="flex items-center gap-3 mb-8">
-
-        {/* Logo OR Fallback Initial */}
         {logo ? (
           <img
             src={logo}
@@ -79,69 +106,54 @@ export default function Sidebar({ onNavigate }) {
 
       {/* Navigation */}
       <nav className="space-y-2">
-        {[
-          { id: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+        {links.map((link) => {
+          // 🔑 ACTIVE LOGIC (Dashboard special case)
+          const isActive =
+            link.id === "/dashboard"
+              ? pathname === "/dashboard"
+              : pathname === link.id || pathname.startsWith(link.id + "/");
 
-          {
-            id: "/menus",
-            label: "Menu",
-            icon: Utensils,
-            children: [
-              { id: "/menus", label: "Menus" },
-              { id: "/menus/items", label: "Menu Items" },
-              { id: "/menus/categories", label: "Item Categories" },
-            ],
-          },
+          return (
+            <div key={link.id}>
+              <button
+                onClick={() => handleNav(link.id)}
+                className={cn(
+                  "flex items-center w-full px-3 py-2 rounded-md transition-colors text-left",
+                  isActive
+                    ? "bg-indigo-600 text-white"
+                    : "hover:bg-indigo-600"
+                )}
+              >
+                <link.icon className="w-5 h-5 mr-2" />
+                {link.label}
+              </button>
 
-          {
-            id: "/orders",
-            label: "Orders",
-            icon: Utensils,
-            children: [
-              { id: "/orders", label: "Orders" },
-              { id: "/orders/kot", label: "KOT" },
-            ],
-          },
+              {/* Sub Menu */}
+              {link.children && isActive && (
+                <div className="ml-6 mt-2 space-y-1">
+                  {link.children.map((child) => {
+                    const isChildActive = pathname === child.id;
 
-          { id: "/tables", label: "Tables", icon: Table2 },
-          { id: "/pos", label: "POS", icon: Table2 },
-          { id: "/customers", label: "Customers", icon: Users },
-          { id: "/staff", label: "Staff", icon: UserStarIcon },
-
-          { id: "/payments", label: "Payments", icon: CreditCardIcon },
-
-          { id: "/settings", label: "Setting", icon: Settings },
-        ].map((link) => (
-          <div key={link.id}>
-            <button
-              onClick={() => handleNav(link.id)}
-              className={cn(
-                "flex items-center w-full px-3 py-2 rounded-md hover:bg-indigo-600 transition-colors text-left",
-                pathname.startsWith(link.id) && "bg-indigo-600"
+                    return (
+                      <button
+                        key={child.id}
+                        onClick={() => handleNav(child.id)}
+                        className={cn(
+                          "block w-full text-left text-sm px-2 py-1 rounded",
+                          isChildActive
+                            ? "text-indigo-400 font-semibold"
+                            : "text-gray-300 hover:text-white"
+                        )}
+                      >
+                        {child.label}
+                      </button>
+                    );
+                  })}
+                </div>
               )}
-            >
-              <link.icon className="w-5 h-5 mr-2" />
-              {link.label}
-            </button>
-
-            {link.children && pathname.startsWith(link.id) && (
-              <div className="ml-6 mt-2 space-y-1">
-                {link.children.map((child) => (
-                  <button
-                    key={child.id}
-                    onClick={() => handleNav(child.id)}
-                    className={cn(
-                      "block text-sm text-gray-300 hover:text-white",
-                      pathname === child.id && "text-indigo-400"
-                    )}
-                  >
-                    {child.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
+            </div>
+          );
+        })}
       </nav>
     </aside>
   );

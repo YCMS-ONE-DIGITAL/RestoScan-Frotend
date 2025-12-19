@@ -33,35 +33,25 @@ export default function DashboardLayout() {
     return <Navigate to="/login" replace />;
   }
 
-  return (
-    <div className="flex bg-[#0E1421] text-white h-screen overflow-hidden">
-              <TopToaster />
+ return (
+  <div className="flex bg-[#0E1421] text-white min-h-screen">
+    <TopToaster />
 
-      {/* ✅ Sidebar - Desktop */}
-      <div className="hidden md:block w-64">
-        <Sidebar />
-      </div>
-
-      {/* ✅ Sidebar - Mobile */}
-      <Sheet open={open} onOpenChange={setOpen}>
-        <SheetTrigger asChild></SheetTrigger>
-        <SheetContent side="left" className="p-0 bg-[#121826] text-white">
-          <Sidebar onNavigate={() => setOpen(false)} />
-        </SheetContent>
-      </Sheet>
-
-      {/* ✅ MAIN AREA */}
-      <div className="flex flex-col flex-1 overflow-hidden min-h-0">
-        <Topbar onMenuToggle={() => setOpen(true)} />
-
-  <main
-  className="flex-1 overflow-y-auto min-h-0"
-  style={{ height: "calc(100vh - 56px)", padding: "0 1.5rem" }}
->
-  <Outlet />
-</main>
-
-      </div>
+    <div className="hidden md:block w-64">
+      <Sidebar />
     </div>
-  );
+
+    <div className="flex flex-col flex-1 min-h-0">
+      <Topbar onMenuToggle={() => setOpen(true)} />
+
+      <main
+        className="flex-1 overflow-y-auto min-h-0"
+        style={{ padding: "0 1.5rem" }}
+      >
+        <Outlet />
+      </main>
+    </div>
+  </div>
+);
+
 }

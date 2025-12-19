@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { Sun, Moon } from "lucide-react";
 import GetStartedButton from "./GetStartedButton";
+import { useNavigate, Link } from "react-router-dom";
+
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
+
   const [theme, setTheme] = useState(
     localStorage.getItem("theme") || "light"
   );
@@ -90,16 +94,16 @@ const Navbar = () => {
             )}
           </button>
 
-          <a
-            href="/login"
-            className="px-4 py-2 text-sm font-semibold border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"
-          >
+          <button 
+           onClick={() => navigate("/login")}
+  className="px-4 py-2 text-sm font-semibold border rounded-lg"
+>
             Login
-          </a>
+          </button>
 
           <GetStartedButton
             text="Get Started"
-            onClick={() => (window.location.href = "/signup")}
+            onClick={() => navigate("/signup")}
           />
         </div>
 
@@ -192,8 +196,7 @@ const Navbar = () => {
 
             <a
               href="#"
-              onClick={() => (window.location.href = "/login")}
-
+              onClick={() => navigate("/login")}
               className="px-4 py-2 text-sm font-semibold border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"
             >
               Login
@@ -204,7 +207,7 @@ const Navbar = () => {
           <li>
             <GetStartedButton
               text="Get Started"
-              onClick={() => (window.location.href = "/signup")}
+              onClick={() => navigate("/signup")}
             />
           </li>
         </ul>

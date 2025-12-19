@@ -29,7 +29,8 @@ import AddRestaurant from "./pages/AddRestaurant";
 import ForgotPassword from "./components/auth/ForgotPassword";
 import TopToaster from "./components/TopToaster";
 
-const allPageRouter = createBrowserRouter([
+const allPageRouter = createBrowserRouter(
+  [
   // ===========================
   // Customer Website Routes
   // ===========================
@@ -53,13 +54,18 @@ const allPageRouter = createBrowserRouter([
   // Public Routes
   // ===========================
   {
+    path: "/",
+    element: <HomePage />,
+  },
+  {
     path: "/homepage",
     element: <HomePage />,
   },
   {
     path: "/signup",
-    element: 
+    element: <PublicRoute>
       <AuthForm />
+    </PublicRoute>,
   },
   {
     path: "/login",
@@ -86,7 +92,7 @@ const allPageRouter = createBrowserRouter([
   ),
 },
   {
-    path: "/",
+    path: "/dashboard",
     element:  <ProtectedRoutes requireRestaurant={true}>
       <DashboardLayout />
     </ProtectedRoutes>,

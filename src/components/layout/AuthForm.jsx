@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { Eye, EyeOff, Mail, Phone } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Eye, EyeOff, Lock, Mail, Phone, User } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
 import api from "../../api/api";
 import ForgotPassword from "../auth/ForgotPassword";
 import toast from "react-hot-toast";
@@ -8,11 +8,19 @@ import toast from "react-hot-toast";
 export default function AuthForm() {
   const navigate = useNavigate();
 
-  const [isLogin, setIsLogin] = useState(false);
+  // const [isLogin, setIsLogin] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isOtpStage, setIsOtpStage] = useState(false);
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const location = useLocation();
+  const isLogin = location.pathname === "/login";
+
+  useEffect(() => {
+    setIsOtpStage(false);
+    setOtp("");
+  }, [location.pathname]);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -45,7 +53,7 @@ export default function AuthForm() {
         }
       } catch {
         // alert("Invalid email or password");
-                    toast.error("Invalid email or password")
+        toast.error("Invalid email or password")
 
       }
 
@@ -74,15 +82,15 @@ export default function AuthForm() {
       if (res.data.status === "success") {
         setIsOtpStage(true);
 
-      } 
+      }
       else {
         // alert(res.data.message);
-                  toast.error(res.data.message)
+        toast.error(res.data.message)
 
       }
     } catch (err) {
       // alert(err?.response?.data?.message || "Failed to send OTP");
-toast.error(err?.response?.data?.message || "Failed to send OTP")
+      toast.error(err?.response?.data?.message || "Failed to send OTP")
 
     }
 
@@ -105,16 +113,16 @@ toast.error(err?.response?.data?.message || "Failed to send OTP")
 
       if (res.data.status === "success") {
         navigate("/dashboard");
-                         toast.success("singup successfully")
+        toast.success("singup successfully")
 
       } else {
         // alert(res.data.message);
-                          toast.error(res.data.message)
+        toast.error(res.data.message)
 
       }
     } catch {
       // alert("Invalid OTP");
-                        toast.error("Invalid otp")
+      toast.error("Invalid otp")
 
     }
 
@@ -136,13 +144,17 @@ toast.error(err?.response?.data?.message || "Failed to send OTP")
             {!isLogin && (
               <div>
                 <label className="block mb-1 font-medium">Full Name</label>
-                <input
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-lg p-2"
-                  required
-                />
+                <div className="relative">
+                  <User className="absolute left-3 top-3 text-gray-400" size={18} />
+
+                  <input
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    className="w-full border border-gray-300 rounded-lg p-2 pl-10"
+                    required
+                  />
+                </div>
               </div>
             )}
 
@@ -180,18 +192,20 @@ toast.error(err?.response?.data?.message || "Failed to send OTP")
             <div>
               <label className="block mb-1 font-medium">Password</label>
               <div className="relative">
+                <Lock className="absolute left-3 top-3 text-gray-400" size={18} />
+
                 <input
                   type={showPassword ? "text" : "password"}
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-lg p-2 pr-10"
+                  className="w-full border border-gray-300 rounded-lg p-2 pl-10"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-3"
+                  className="absolute right-3 top-3" 
                 >
                   {showPassword ? <EyeOff size={22} /> : <Eye size={22} />}
                 </button>
@@ -205,18 +219,16 @@ toast.error(err?.response?.data?.message || "Failed to send OTP")
             >
               {loading ? "Please Wait..." : isLogin ? "Sign In" : "Sign Up"}
             </button>
-            <div className="flex align-item-center gap-3" >
-              <p className=" text-sm">
+            <div className="flex flex-col items-center gap-3 text-center">
+              <p className="text-sm">
                 {isLogin ? "Don't have an account?" : "Already have an account?"}
                 <button
                   type="button"
-                  onClick={() => setIsLogin(!isLogin)}
+                  onClick={() => navigate(isLogin ? "/signup" : "/login")}
                   className="text-blue-600 ml-1"
                 >
-                  {isLogin ? "Sign up " : "Sign in "}
+                  {isLogin ? "Sign up" : "Sign in"}
                 </button>
-
-
               </p>
 
               {isLogin && (
@@ -229,6 +241,7 @@ toast.error(err?.response?.data?.message || "Failed to send OTP")
                 </button>
               )}
             </div>
+
 
           </form>
         )}
