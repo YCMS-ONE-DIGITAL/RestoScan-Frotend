@@ -85,8 +85,8 @@ export default function Orders() {
   };
 
   return (
-    <div className="p-4 dark:bg-gray-800 relative">
-      <h1 className="text-xl font-semibold dark:text-white mb-4">
+    <div className="p-6 dark:bg-gray-800 ">
+      <h1 className="text-xl font-semibold dark:text-white">
         Orders ({pagination.total ?? 0})
       </h1>
 

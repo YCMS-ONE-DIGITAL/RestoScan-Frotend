@@ -71,7 +71,7 @@ const CategoryList = () => {
   }
 
   return (
-    <div className="p-6 min-h-screen bg-gray-950 text-white">
+    <div className="p-6  text-white">
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>

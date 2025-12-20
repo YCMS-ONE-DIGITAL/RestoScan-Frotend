@@ -1,28 +1,27 @@
 // src/components/layout/Topbar.jsx
-import { Menu, Rocket, Sun } from "lucide-react";
+
+import { Menu, Sun } from "lucide-react";
 
 export default function Topbar({ onMenuToggle }) {
   return (
-    <header className="flex justify-between items-center bg-[#1C2333] text-white px-4 md:px-6 py-3 border-b border-gray-700">
-      {/* Mobile menu button */}
-      <button
-        className="md:hidden p-2 rounded hover:bg-[#2B3348]"
-        onClick={onMenuToggle}
-      >
-        <Menu className="w-5 h-5" />
-      </button>
+    <header className="flex items-center justify-between bg-[#1C2333] px-4 md:px-6 py-3 border-b border-white/10">
+      {/* Left */}
+      <div className="flex items-center gap-3">
+        <button
+          onClick={onMenuToggle}
+          className="md:hidden p-2 rounded-lg hover:bg-white/10 transition"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
 
-      <div className="flex items-center gap-4 ml-auto">
-        {/* <button className="bg-purple-700 text-white px-3 py-1.5 rounded-md text-sm">
-          Today Orders <span className="ml-2 bg-white text-purple-700 px-2 rounded">0</span>
-        </button> 
-        <button className="hidden sm:flex bg-[#2B3348] px-3 py-1.5 rounded-md items-center gap-2 hover:bg-indigo-600 text-sm">
-          <Rocket className="w-4 h-4" /> Upgrade Plan
-        </button>*/}
-        <Sun className="w-5 h-5 text-gray-300" />
-        {/* <div className="bg-gray-300 text-black rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm">
-          AB
-        </div> */}
+        <h1 className="hidden md:block text-lg font-semibold text-gray-200">
+          Dashboard
+        </h1>
+      </div>
+
+      {/* Right */}
+      <div className="flex items-center gap-4">
+        <Sun className="w-5 h-5 text-gray-400 hover:text-white cursor-pointer transition" />
       </div>
     </header>
   );

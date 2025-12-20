@@ -1,6 +1,7 @@
 // src/components/layout/Sidebar.jsx
+
 import { useNavigate, useLocation } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   LayoutDashboard,
   Utensils,
@@ -20,30 +21,30 @@ export default function Sidebar({ onNavigate }) {
   const [restaurantName, setRestaurantName] = useState("Restaurant");
   const [logo, setLogo] = useState(null);
 
-  // IMAGE FIX HELPER
   const getImageUrl = (path) => {
     if (!path) return null;
     if (path.startsWith("http")) return path;
-
     const base = import.meta.env.VITE_API_URL || "http://localhost:8000";
     return `${base}/storage/${path}`;
   };
 
   useEffect(() => {
+    let mounted = true;
+
     const fetchRestaurant = async () => {
       try {
         const res = await api.get("/restaurant/show");
-        if (res.data?.restaurant) {
-          const r = res.data.restaurant;
-          setRestaurantName(r.restaurant_name || "Restaurant");
-          setLogo(getImageUrl(r.logo_url));
+        if (mounted && res.data?.restaurant) {
+          setRestaurantName(res.data.restaurant.restaurant_name || "Restaurant");
+          setLogo(getImageUrl(res.data.restaurant.logo_url));
         }
-      } catch (err) {
-        console.error("Restaurant fetch error:", err);
+      } catch (e) {
+        console.error("Restaurant fetch error:", e);
       }
     };
 
     fetchRestaurant();
+    return () => (mounted = false);
   }, []);
 
   const handleNav = (path) => {
@@ -61,7 +62,7 @@ export default function Sidebar({ onNavigate }) {
       children: [
         { id: "/dashboard/menus", label: "Menus" },
         { id: "/dashboard/menus/items", label: "Menu Items" },
-        { id: "/dashboard/menus/categories", label: "Item Categories" },
+        { id: "/dashboard/menus/categories", label: "Categories" },
       ],
     },
 
@@ -80,13 +81,13 @@ export default function Sidebar({ onNavigate }) {
     { id: "/dashboard/customers", label: "Customers", icon: Users },
     { id: "/dashboard/staff", label: "Staff", icon: UserStarIcon },
     { id: "/dashboard/payments", label: "Payments", icon: CreditCardIcon },
-    { id: "/dashboard/settings", label: "Setting", icon: Settings },
+    { id: "/dashboard/settings", label: "Settings", icon: Settings },
   ];
 
   return (
-    <aside className="w-full bg-[#121826] text-white overflow-y-auto p-4 flex flex-col">
-      {/* ⭐ Restaurant Logo + Name */}
-      <div className="flex items-center gap-3 mb-8">
+    <aside className="h-full bg-[#121826] p-4 flex flex-col">
+      {/* Logo */}
+      <div className="flex items-center gap-3 pb-4 mb-6 border-b border-white/10">
         {logo ? (
           <img
             src={logo}
@@ -94,20 +95,17 @@ export default function Sidebar({ onNavigate }) {
             className="w-10 h-10 rounded-lg object-cover border border-white/20"
           />
         ) : (
-          <div className="bg-indigo-500 text-white w-10 h-10 flex items-center justify-center rounded-md font-bold uppercase">
+          <div className="bg-indigo-600 w-10 h-10 flex items-center justify-center rounded-lg font-bold">
             {restaurantName.charAt(0)}
           </div>
         )}
 
-        <span className="text-lg font-semibold capitalize truncate max-w-[160px]">
-          {restaurantName}
-        </span>
+        <span className="font-semibold truncate">{restaurantName}</span>
       </div>
 
-      {/* Navigation */}
+      {/* Nav */}
       <nav className="space-y-2">
         {links.map((link) => {
-          // 🔑 ACTIVE LOGIC (Dashboard special case)
           const isActive =
             link.id === "/dashboard"
               ? pathname === "/dashboard"
@@ -118,37 +116,32 @@ export default function Sidebar({ onNavigate }) {
               <button
                 onClick={() => handleNav(link.id)}
                 className={cn(
-                  "flex items-center w-full px-3 py-2 rounded-md transition-colors text-left",
+                  "flex items-center w-full px-3 py-2 rounded-lg transition-all text-left",
                   isActive
-                    ? "bg-indigo-600 text-white"
-                    : "hover:bg-indigo-600"
+                    ? "bg-indigo-600 shadow-md"
+                    : "hover:bg-indigo-500/20"
                 )}
               >
                 <link.icon className="w-5 h-5 mr-2" />
                 {link.label}
               </button>
 
-              {/* Sub Menu */}
               {link.children && isActive && (
-                <div className="ml-6 mt-2 space-y-1">
-                  {link.children.map((child) => {
-                    const isChildActive = pathname === child.id;
-
-                    return (
-                      <button
-                        key={child.id}
-                        onClick={() => handleNav(child.id)}
-                        className={cn(
-                          "block w-full text-left text-sm px-2 py-1 rounded",
-                          isChildActive
-                            ? "text-indigo-400 font-semibold"
-                            : "text-gray-300 hover:text-white"
-                        )}
-                      >
-                        {child.label}
-                      </button>
-                    );
-                  })}
+                <div className="ml-5 mt-2 space-y-1 border-l border-white/10 pl-3">
+                  {link.children.map((child) => (
+                    <button
+                      key={child.id}
+                      onClick={() => handleNav(child.id)}
+                      className={cn(
+                        "block w-full text-left text-sm px-2 py-1 rounded transition",
+                        pathname === child.id
+                          ? "text-indigo-400 font-semibold"
+                          : "text-gray-400 hover:text-white"
+                      )}
+                    >
+                      {child.label}
+                    </button>
+                  ))}
                 </div>
               )}
             </div>

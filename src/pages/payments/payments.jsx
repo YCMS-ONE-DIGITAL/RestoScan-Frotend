@@ -53,33 +53,47 @@ export default function Payments() {
 
   // 🔥 CSV Export
   const downloadCSV = (payments) => {
-    if (!payments || payments.length === 0) {
-      alert("No payments found!");
-      return;
-    }
+  if (!payments || payments.length === 0) {
+    toast.error("No payments found!");
+    return;
+  }
 
-    const header = ["Order ID", "Amount", "Payment Method", "Date & Time"];
-    const rows = payments.map((p) => [
-      `#${p.id}`,
-      p.total_amount,
-      p.payment_method || "-",
-      new Date(p.created_at).toLocaleString(),
-    ]);
+  const header = ["Order ID", "Amount", "Payment Method", "Date & Time"];
 
-    const csvContent =
-      "data:text/csv;charset=utf-8," +
-      [header, ...rows].map((row) => row.join(",")).join("\n");
+  const rows = payments.map((p) => [
+    `#${p.id}`,
+    p.total_amount,
+    p.payment_method || "-",
+    new Date(p.created_at).toLocaleString(),
+  ]);
 
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
+  // 🔥 CSV escape + quote
+  const csvRows = [
+    header,
+    ...rows
+  ].map(row =>
+    row.map(value => `"${String(value).replace(/"/g, '""')}"`).join(",")
+  );
 
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", "payments.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
+  // 🔥 BOM added for Excel
+  const csvContent = "\uFEFF" + csvRows.join("\n");
+
+  const blob = new Blob([csvContent], {
+    type: "text/csv;charset=utf-8;"
+  });
+
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "payments.csv";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  URL.revokeObjectURL(url);
+};
+
 
   return (
     <div>
@@ -132,7 +146,7 @@ export default function Payments() {
               <TableHead className="text-gray-300">Status</TableHead>
               <TableHead className="text-gray-300">Order</TableHead>
               <TableHead className="text-gray-300">Date & Time</TableHead>
-              <TableHead className="text-right text-gray-300">Action</TableHead>
+              {/* <TableHead className="text-right text-gray-300">Action</TableHead> */}
             </TableRow>
           </TableHeader>
 
@@ -152,9 +166,9 @@ export default function Payments() {
                   {new Date(p.created_at).toLocaleString()}
                 </TableCell>
 
-                <TableCell className="text-right">
+                {/* <TableCell className="text-right">
                   <button className="text-blue-400 hover:underline">View</button>
-                </TableCell>
+                </TableCell> */}
               </TableRow>
             ))}
           </TableBody>

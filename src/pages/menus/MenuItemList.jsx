@@ -94,7 +94,7 @@ export default function MenuItemsList() {
     // toast.success("Item saved successfully!");       // ⭐ FORM SAVE TOAST
   };
   return (
-    <div className="p-6 min-h-screen bg-gray-950 text-white">
+    <div className="p-6   text-white">
 
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">

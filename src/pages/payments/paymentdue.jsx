@@ -56,7 +56,7 @@ const paymentdue = () => {
                 <TableHead className="text-gray-300 dark:text-gray-300">Payment Method</TableHead>
                 <TableHead className="text-gray-300 dark:text-gray-300">Order</TableHead>
                 <TableHead className="text-gray-300 dark:text-gray-300">	Date & Time</TableHead>
-                <TableHead className="text-right text-gray-300 dark:text-gray-300">Action</TableHead>
+                {/* <TableHead className="text-right text-gray-300 dark:text-gray-300">Action</TableHead> */}
               </TableRow>
             </TableHeader>
 
@@ -68,9 +68,9 @@ const paymentdue = () => {
       <TableCell className="text-gray-300 dark:text-gray-200">{staff.role}</TableCell>
       <TableCell className="text-gray-300 dark:text-gray-200">{staff.joined}</TableCell>
 
-      <TableCell className="text-right">
+      {/* <TableCell className="text-right">
         <button className="text-skin-base hover:underline">Edit</button>
-      </TableCell>
+      </TableCell> */}
     </TableRow>
   ))}
 </TableBody>

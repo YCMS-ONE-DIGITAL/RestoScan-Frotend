@@ -115,12 +115,12 @@ useEffect(() => {
           Orders ({pagination.total ?? displayedOrders.length})
         </h1>
 
-        <button
-          onClick={() => navigate("/pos")}
+        {/* <button
+          onClick={() => navigate("dashboard/pos")}
           className="bg-orange-600 text-white px-5 py-2.5 rounded-lg"
         >
           + New Order
-        </button>
+        </button> */}
       </div>
 
       {/* Filters */}

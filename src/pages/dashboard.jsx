@@ -12,6 +12,7 @@ import SalesChart from "../components/DashboardComponents/SalesChart";
 import OrderSidePanelOrders from "../components/pos/OrderSidePanelOrders";
 import { playSound } from "../components/Playsound";
 
+
 export default function Dashboard() {
   const qc = useQueryClient();
   const [selectedOrder, setSelectedOrder] = useState(null);

@@ -78,7 +78,7 @@ const MenuList = () => {
   }
 
   return (
-    <div className="p-6 min-h-screen bg-gray-950 text-white">
+    <div className="p-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>

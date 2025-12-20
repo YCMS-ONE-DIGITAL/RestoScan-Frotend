@@ -40,7 +40,7 @@ const MenuPage = () => {
 
   return (
 <div className="flex flex-col min-h-0">
-      <Card className="p-4 flex-1 overflow-hidden">
+      <Card className="p-4 flex-1 ">
         <h2 className="text-xl font-semibold mb-4">Menus</h2>
 
         <div className="flex gap-2 mb-4">
