@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import Sidebar from "./Sidebar";
-import Topbar from "./Topbar";
+import TopBar from "./TopBar"
 import api from "@/api/api";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import TopToaster from "../TopToaster";
@@ -50,8 +50,8 @@ export default function DashboardLayout() {
       {/* Main Column */}
       <div className="flex flex-col flex-1 min-w-0">
         {/* Topbar - Fixed */}
-        <Topbar onMenuToggle={() => setOpen(true)} />
-
+        <TopBar onMenuToggle={() => setOpen(true)} />
+        {/* <TopBar */}
         {/* Main Content - Only This Scrolls */}
         <main className="flex-1 overflow-y-auto px-6 py-4">
           <div className="max-w-[1600px] mx-auto">
