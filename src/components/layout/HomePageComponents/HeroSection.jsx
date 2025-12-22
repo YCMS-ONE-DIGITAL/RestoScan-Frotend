@@ -1,6 +1,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import GetStartedButton from "./GetStartedButton";
+import banner1 from "../../../assets/banner1.png";
 
 const HeroSection = () => {
   return (
@@ -58,7 +59,7 @@ const HeroSection = () => {
           <div className="absolute -inset-6 bg-purple-300/25 dark:bg-purple-600/20 rounded-3xl blur-3xl animate-pulse"></div>
 
           <img
-            src="https://restoscan.com/landing/dashboard.png"
+            src={banner1}
             alt="POS Dashboard Preview"
             className="relative w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-700"
           />

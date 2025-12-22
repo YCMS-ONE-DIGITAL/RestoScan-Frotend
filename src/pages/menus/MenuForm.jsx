@@ -63,7 +63,7 @@ const MenuForm = ({ menu, onClose }) => {
             />
 
             <div className="flex justify-end gap-3 mt-4">
-              <Button variant="outline" onClick={onClose} type="button">
+              <Button variant="outline" className="text-gray-800" onClick={onClose} type="button">
                 Cancel
               </Button>
               <Button type="submit" disabled={mutation.isPending}>

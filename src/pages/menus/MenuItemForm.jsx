@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import toast from "react-hot-toast";
+import { getImageUrl } from "../../utils/image";
 
 
 export default function MenuItemsForm({
@@ -36,7 +37,7 @@ export default function MenuItemsForm({
       setPrice(item.price?.toString() || "");
       setImagePreview(
         item.image
-          ? "http://localhost:8000/storage/" + item.image
+          ? getImageUrl(item.image)
           : null
       );
       setIsAvailable(item.is_available ?? true);

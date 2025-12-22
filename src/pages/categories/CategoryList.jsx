@@ -7,8 +7,8 @@ import CategoryForm from "./CategoryForm";
 import { Plus, Edit, Trash2, Loader2 } from "lucide-react";
 import ConfirmBox from "../../components/ConfirmBox";
 import toast from "react-hot-toast";
+import { getImageUrl } from "../../utils/image";
 
-const baseURL = "http://localhost:8000/storage/";
 
 const CategoryList = () => {
   const qc = useQueryClient();
@@ -94,7 +94,7 @@ const CategoryList = () => {
             {/* CATEGORY IMAGE */}
             {cat.image ? (
               <img
-                src={baseURL + cat.image}
+            src={getImageUrl(cat.image)}
                 alt={cat.name}
                 className="w-full h-40 object-cover"
                 onError={(e) =>

@@ -1,6 +1,7 @@
 // MenuGrid.jsx
 import { useQuery } from "@tanstack/react-query";
 import api from "@/api/api";
+import { getImageUrl } from "../../utils/image";
 
 export default function MenuGrid({ search, filterCat, cartItems, setCartItems }) {
   const { data: items = [], isLoading } = useQuery({
@@ -11,16 +12,6 @@ export default function MenuGrid({ search, filterCat, cartItems, setCartItems })
     },
   });
 
-  
-const getImageUrl = (path) => {
-  if (!path) return null;
-
-  // Full URL
-  if (path.startsWith("http")) return path;
-
-  // Laravel public storage
-  return "http://localhost:8000/storage/" + path;
-};
 
 
   if (isLoading) return <p className="text-center py-10 text-gray-400">Loading menu...</p>;

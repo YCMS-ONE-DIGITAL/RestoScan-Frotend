@@ -1,23 +1,26 @@
 import React from "react";
 
+import banner2 from "../../../assets/banner2.png";
+import banner3 from "../../../assets/banner3.png";
+import banner4 from "../../../assets/banner4.png";
 const FeaturesSection = () => {
   const features = [
     {
       title: "Streamline Order Management",
       desc: "Track dine-in, delivery, and takeaway orders in one unified dashboard. Reduce wait times and keep every order organized effortlessly.",
-      img: "https://restoscan.com/landing/order-management.png",
+      img: banner3,
       reverse: false,
     },
     {
       title: "Optimize Table Reservations",
       desc: "Manage real-time table bookings, avoid double reservations, and maximize your restaurant’s seating efficiency during rush hours.",
-      img: "https://restoscan.com/landing/table-reservation.png",
+      img: banner2,
       reverse: true,
     },
     {
       title: "Effortless Menu Management",
       desc: "Easily add, update, or remove dishes anytime. Keep your menu fresh and automatically synced across POS and customer screens.",
-      img: "https://restoscan.com/landing/menu-management.png",
+      img: banner4,
       reverse: false,
     },
   ];

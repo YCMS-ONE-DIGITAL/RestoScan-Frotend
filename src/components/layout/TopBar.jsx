@@ -21,7 +21,7 @@ export default function Topbar({ onMenuToggle }) {
 
       {/* Right */}
       <div className="flex items-center gap-4">
-        <Sun className="w-5 h-5 text-gray-400 hover:text-white cursor-pointer transition" />
+        {/* <Sun className="w-5 h-5 text-gray-400 hover:text-white cursor-pointer transition" /> */}
       </div>
     </header>
   );

@@ -11,7 +11,8 @@ const MenuSearchBar = ({ search, setSearch }) => {
 
       <button
         onClick={() => setSearch("")}
-        className="ml-2 px-4 py-2 bg-gray-800 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-700"
+        
+        className="ml-2 px-4 py-2 bg-gray-800 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium  dark:hover:bg-gray-700"
       >
         Reset
       </button>

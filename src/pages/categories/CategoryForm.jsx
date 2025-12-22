@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import toast from "react-hot-toast";
+import { getImageUrl } from "../../utils/image";
+
 const CategoryForm = ({ category, onClose }) => {
   const [name, setName] = useState("");
   const [imageFile, setImageFile] = useState(null);
@@ -16,7 +18,7 @@ const CategoryForm = ({ category, onClose }) => {
     if (category) {
       setName(category.name);
       setImagePreview(
-        category.image ? "http://localhost:8000/storage/" + category.image : null
+        category.image ? getImageUrl(category.image) : null
       );
     } else {
       setName("");
@@ -133,7 +135,7 @@ const CategoryForm = ({ category, onClose }) => {
             </div>
 
             <div className="flex justify-end gap-4">
-              <Button variant="outline" type="button" onClick={onClose}>
+              <Button variant="outline" className="text-gray-800" type="button" onClick={onClose}>
                 Cancel
               </Button>
               <Button type="submit" disabled={mutation.isPending}>

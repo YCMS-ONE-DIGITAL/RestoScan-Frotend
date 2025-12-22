@@ -107,7 +107,6 @@ qc.invalidateQueries({ queryKey: ["staff-list"] });
               <TableHead className="text-gray-300">Email</TableHead>
               <TableHead className="text-gray-300">Phone</TableHead>
               <TableHead className="text-gray-300">Role</TableHead>
-              <TableHead className="text-gray-300">password</TableHead>
               <TableHead className="text-gray-300">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -127,7 +126,6 @@ qc.invalidateQueries({ queryKey: ["staff-list"] });
                   <TableCell className="text-gray-300">{staff.email}</TableCell>
                   <TableCell className="text-gray-300">{staff.phone}</TableCell>
                   <TableCell className="text-gray-300">{staff.role}</TableCell>
-                  <TableCell className="text-gray-300">{staff.password}</TableCell>
 
                   <TableCell className="destructive flex gap-4">
                     <Button

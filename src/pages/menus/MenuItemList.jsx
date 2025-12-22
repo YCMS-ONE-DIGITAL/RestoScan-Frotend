@@ -8,16 +8,7 @@ import MenuItemsForm from "./MenuItemForm";
 import { Loader2, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import ConfirmBox from "../../components/ConfirmBox";
-
-const getImageUrl = (path) => {
-  if (!path) return null;
-
-  // Full URL
-  if (path.startsWith("http")) return path;
-
-  // Laravel public storage
-  return "http://localhost:8000/storage/" + path;
-};
+import { getImageUrl } from "../../utils/image";
 
 
 export default function MenuItemsList() {
