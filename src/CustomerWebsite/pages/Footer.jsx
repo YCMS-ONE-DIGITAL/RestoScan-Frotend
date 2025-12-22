@@ -1,6 +1,6 @@
 // Footer.jsx
 import { useState } from "react";
-import { ShoppingCart, Home, Menu, Receipt } from "lucide-react";
+import { ShoppingCart, Home, Menu, Receipt, X, Circle } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useCart } from "../context/CardContext";
 import api from "@/api/api";
@@ -14,60 +14,61 @@ export default function Footer({
   tableId,
   restaurantName,
 }) {
-  const {
-    cartItems,
-    cartCount,
-    updateNote,
-    clearCart,
-  } = useCart();
-
-  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [otp, setOtp] = useState("");
-  const [otpSent, setOtpSent] = useState(false);
-  const [errors, setErrors] = useState({});
-  const [otpTimer, setOtpTimer] = useState(30);
-  const [canResend, setCanResend] = useState(false);
+  const { cartItems, cartCount, updateNote, clearCart } = useCart();
 
   const navigate = useNavigate();
   const location = useLocation();
 
+  // 🔥 MODALS
+  const [isCartModalOpen, setIsCartModalOpen] = useState(false);
+  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+
+  // 🔥 USER / OTP
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpTimer, setOtpTimer] = useState(30);
+  const [canResend, setCanResend] = useState(false);
+  const [errors, setErrors] = useState({});
+
+  // 🔥 NOTES
   const [notes, setNotes] = useState({});
   const [orderNote, setOrderNote] = useState("");
 
-  const isActive = (targetPath) => location.pathname === targetPath;
+  const isActive = (path) => location.pathname === path;
 
   const getToken = () => {
     const urlToken = new URLSearchParams(window.location.search).get("token");
     if (urlToken) {
-      try {
-        localStorage.setItem("cw_token", urlToken);
-      } catch (e) {}
+      localStorage.setItem("cw_token", urlToken);
       return urlToken;
     }
-    return localStorage.getItem("cw_token") || null;
+    return localStorage.getItem("cw_token");
   };
+
+
+  const cartTotal = cartItems.reduce(
+  (sum, item) => sum + item.price * item.quantity,
+  0
+);
+
 
   const handleNoteChange = (id, value) => {
     setNotes((prev) => ({ ...prev, [id]: value }));
     updateNote?.(id, value);
   };
 
+  // 🔥 PLACE ORDER → CART MODAL
   const handlePlaceOrder = () => {
     if (cartCount === 0) return;
-    setIsUserModalOpen(true);
+    setIsCartModalOpen(true);
   };
 
   // ⛔ SEND OTP
   const handleSendOtp = async () => {
     if (!name || !phone) {
-      setErrors({ phone: "Name & Phone is required" });
-      return;
-    }
-
-    if (!restaurantId) {
-      setErrors({ phone: "Restaurant missing. Re-scan QR." });
+      setErrors({ phone: "Name & Phone required" });
       return;
     }
 
@@ -81,41 +82,35 @@ export default function Footer({
         return handleVerifyOtp(true);
       }
 
-      // Start Timer
       setOtpSent(true);
       setErrors({});
       setOtpTimer(30);
       setCanResend(false);
 
-      let timer = setInterval(() => {
-        setOtpTimer((prev) => {
-          if (prev <= 1) {
+      const timer = setInterval(() => {
+        setOtpTimer((p) => {
+          if (p <= 1) {
             clearInterval(timer);
             setCanResend(true);
             return 0;
           }
-          return prev - 1;
+          return p - 1;
         });
       }, 1000);
     } catch (err) {
-      console.error("OTP SEND ERROR:", err);
-      setErrors({ phone: err?.response?.data?.message || "OTP send failed" });
+      setErrors({
+        phone: err?.response?.data?.message || "OTP send failed",
+      });
     }
   };
 
   // 🔥 VERIFY OTP + PLACE ORDER
   const handleVerifyOtp = async (skipOtp = false) => {
-    console.log("🔴 handleVerifyOtp CALLED, OTP=", otp);
-
     try {
-      // OTP CHECK
       if (!skipOtp && otp.length !== 4) {
-        setErrors({ otp: "Enter valid 4-digit OTP" });
+        setErrors({ otp: "Enter valid OTP" });
         return;
       }
-
-      // 🔥 VERIFY OTP FIRST
-      console.log("🔥 ABOUT TO CALL VERIFY OTP");
 
       if (!skipOtp) {
         await api.post("/public/verify-otp", {
@@ -123,21 +118,8 @@ export default function Footer({
           otp,
           restaurant_id: Number(restaurantId),
         });
-        console.log("🔥 OTP VERIFIED SUCCESS");
       }
 
-      // VALIDATE TABLE + CART
-      if (!restaurantId || !tableId) {
-        setErrors({ form: "Table/Restaurant missing. Re-scan QR." });
-        return;
-      }
-
-      if (!Array.isArray(cartItems) || cartItems.length === 0) {
-        setErrors({ form: "Cart empty" });
-        return;
-      }
-
-      // ORDER PAYLOAD
       const payload = {
         restaurant_id: Number(restaurantId),
         table_id: Number(tableId),
@@ -151,21 +133,15 @@ export default function Footer({
         })),
       };
 
-      console.log("ORDER PAYLOAD:", payload);
-
-      // PLACE ORDER
       await api.post("/public/order", payload);
-      toast.success("Order Placed Successfully ")
-      // CLEANUP
+
+      toast.success("Order Placed Successfully 🎉");
+
       clearCart();
-      setName("");
-      setPhone("");
-      setOtp("");
-      setOtpSent(false);
-      setErrors({});
       setIsUserModalOpen(false);
-      setOrderNote("");
+      setOtpSent(false);
       setNotes({});
+      setOrderNote("");
 
       const newToken = btoa(
         encryptData({
@@ -180,7 +156,6 @@ export default function Footer({
       localStorage.setItem("cw_token", newToken);
       navigate(`/customerwebsite/orderhistory?token=${newToken}`);
     } catch (err) {
-      console.error("VERIFY/ORDER ERROR:", err);
       setErrors({
         otp: err?.response?.data?.message || "OTP verification failed",
       });
@@ -190,67 +165,51 @@ export default function Footer({
   return (
     <>
       {/* FOOTER NAV */}
-      <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40">
+      <footer className="fixed bottom-0 left-0 right-0 bg-white border-t z-40">
         <div className="flex justify-around text-xs py-2">
           <button
-            onClick={() => {
-              const t = getToken();
-              navigate(`/customerwebsite${t ? `?token=${t}` : ""}`);
-            }}
-            className={`flex flex-col items-center ${
-              isActive("/customerwebsite")
-                ? "text-orange-600"
-                : "text-gray-500"
-            }`}
+            onClick={() =>
+              navigate(`/customerwebsite${getToken() ? `?token=${getToken()}` : ""}`)
+            }
+            className={isActive("/customerwebsite") ? "text-orange-600" : "text-gray-500"}
           >
-            <Home className="w-5 h-5" />
-            <span>Home</span>
+            <Home className="w-5 h-5 mx-auto" />
+            Home
           </button>
 
           <button
-            onClick={() => {
-              const t = getToken();
-              navigate(`/customerwebsite/menu${t ? `?token=${t}` : ""}`);
-            }}
-            className={`flex flex-col items-center ${
-              isActive("/customerwebsite/menu")
-                ? "text-orange-600"
-                : "text-gray-500"
-            }`}
+            onClick={() =>
+              navigate(`/customerwebsite/menu${getToken() ? `?token=${getToken()}` : ""}`)
+            }
+            className={isActive("/customerwebsite/menu") ? "text-orange-600" : "text-gray-500"}
           >
-            <Menu className="w-5 h-5" />
-            <span>Menu</span>
+            <Menu className="w-5 h-5 mx-auto" />
+            Menu
           </button>
 
           <button
-            onClick={() => {
-              const t = getToken();
-              navigate(`/customerwebsite/orderhistory${t ? `?token=${t}` : ""}`);
-            }}
-            className={`flex flex-col items-center ${
-              isActive("/customerwebsite/orderhistory")
-                ? "text-orange-600"
-                : "text-gray-500"
-            }`}
+            onClick={() =>
+              navigate(`/customerwebsite/orderhistory${getToken() ? `?token=${getToken()}` : ""}`)
+            }
+            className={isActive("/customerwebsite/orderhistory") ? "text-orange-600" : "text-gray-500"}
           >
-            <Receipt className="w-5 h-5" />
-            <span>Orders</span>
+            <Receipt className="w-5 h-5 mx-auto" />
+            Orders
           </button>
         </div>
       </footer>
 
-      {/* ORDER BUTTON */}
+      {/* FLOATING CART BAR */}
       {cartCount > 0 && (
-        <div className="fixed bottom-16 left-0 right-0 px-5 flex justify-center z-50">
-          <div className="flex items-center justify-between w-full max-w-sm px-5 py-3 rounded-full shadow-xl bg-white">
-            <div className="flex items-center gap-2 text-sm text-orange-900">
+        <div className="fixed bottom-16 left-0 right-0 px-5 z-50">
+          <div className="bg-white rounded-full shadow-xl flex justify-between items-center px-5 py-3 max-w-sm mx-auto">
+            <div className="flex items-center gap-2 text-sm">
               <ShoppingCart className="w-4 h-4" />
-              <span>{cartCount} items</span>
+              {cartCount} items
             </div>
-
             <button
               onClick={handlePlaceOrder}
-              className="bg-orange-500 text-white text-xs font-bold px-3 py-1.5 rounded-full"
+              className="bg-orange-500 text-white px-4 py-1.5 rounded-full text-xs font-bold"
             >
               Place Order
             </button>
@@ -258,7 +217,103 @@ export default function Footer({
         </div>
       )}
 
-      {/* OTP MODAL */}
+      {/* 🛒 CART MODAL */}
+      {/* 🛒 CART MODAL – PREMIUM BOTTOM SHEET */}
+{isCartModalOpen && (
+  <div className="fixed inset-0 z-[60] bg-black/50 flex items-end">
+    {/* BACKDROP CLICK */}
+    <div
+      className="absolute inset-0"
+      onClick={() => setIsCartModalOpen(false)}
+    />
+
+    {/* SHEET */}
+    <div className="relative w-full bg-white rounded-t-3xl max-h-[85vh] flex flex-col animate-slideUp">
+      
+      {/* HEADER */}
+      <div className="flex items-center justify-between px-5 py-4 border-b">
+        <h2 className="text-lg font-bold">Your Cart ({cartCount})</h2>
+        <button
+          onClick={() => setIsCartModalOpen(false)}
+          className="p-2 rounded-full hover:bg-gray-100"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      </div>
+
+      {/* ITEMS */}
+      <div className="flex-1 overflow-y-auto px-5 py-3 space-y-4">
+        {cartItems.map((item) => (
+          <div key={item.id} className="border rounded-xl p-3">
+           <div className="flex justify-between items-start gap-3">
+  <div className="flex items-start gap-2">
+    
+    {/* 🟢 / 🔴 VEG-NONVEG DOT */}
+    <Circle
+      className={`w-3 h-3 mt-1 ${
+        item.type === "nonveg" || item.is_veg === false
+          ? "text-red-600 fill-red-600"
+          : "text-green-600 fill-green-600"
+      }`}
+    />
+
+    <div>
+      <p className="font-semibold text-sm">{item.name}</p>
+      <p className="text-xs text-gray-500">
+        Qty: {item.quantity}
+      </p>
+    </div>
+  </div>
+
+  <p className="font-bold text-sm whitespace-nowrap">
+    ₹{item.price * item.quantity}
+  </p>
+</div>
+
+
+            <input
+              type="text"
+              placeholder="Add item note (optional)"
+              className="mt-2 w-full border rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-orange-500"
+              value={notes[item.id] || ""}
+              onChange={(e) => handleNoteChange(item.id, e.target.value)}
+            />
+          </div>
+        ))}
+
+        {/* ORDER NOTE */}
+        <textarea
+          placeholder="Order note (optional)"
+          className="w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500"
+          rows={2}
+          value={orderNote}
+          onChange={(e) => setOrderNote(e.target.value)}
+        />
+      </div>
+
+      {/* FOOTER ACTION */}
+      <div className="border-t px-5 py-4 bg-white sticky bottom-0">
+      <button
+  onClick={() => {
+    setIsCartModalOpen(false);
+    setIsUserModalOpen(true);
+  }}
+  className="w-full bg-orange-500 text-white py-3 rounded-xl font-bold text-sm active:scale-95 transition flex justify-between items-center px-5"
+>
+  <div className="flex flex-col text-left">
+    <span>Continue</span>
+    <span className="text-xs opacity-90">Including all items</span>
+  </div>
+  <span className="text-lg">₹{cartTotal}</span>
+</button>
+
+      </div>
+    </div>
+  </div>
+)}
+
+
+      {/* 🔐 OTP MODAL */}
       <UserDetailsModal
         isOpen={isUserModalOpen}
         name={name}
