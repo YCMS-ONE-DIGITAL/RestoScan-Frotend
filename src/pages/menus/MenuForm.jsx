@@ -4,6 +4,7 @@ import api from "@/api/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import toast from "react-hot-toast";
 
 const MenuForm = ({ menu, onClose }) => {
   const [name, setName] = useState("");
@@ -13,15 +14,32 @@ const MenuForm = ({ menu, onClose }) => {
     if (menu) setName(menu.name);
   }, [menu]);
 
+  // ADD + EDIT mutation
   const mutation = useMutation({
-    mutationFn: async (data) => {
-      if (menu) return api.put(`/menus/${menu.id}`, data);
-      else return api.post("/menus", data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(["menus"]);
-      onClose();
-    },
+  mutationFn: async (data) => {
+    if (menu) {
+      return api.post(`/restaurant/menus/update/${menu.id}`, data);
+    }
+    return api.post(`/restaurant/menus/add`, data);
+  },
+
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ["menus"] });
+
+    if (menu) {
+      toast.success("Menu updated successfully!");
+    } else {
+      toast.success("Menu created successfully!");
+    }
+
+    // ⭐ FORM बंद करा – हे अत्यंत महत्वाचे!
+    onClose();
+  },
+
+  onError: () => {
+    toast.error("Failed to save menu!");
+  }
+
   });
 
   const handleSubmit = (e) => {
@@ -45,7 +63,7 @@ const MenuForm = ({ menu, onClose }) => {
             />
 
             <div className="flex justify-end gap-3 mt-4">
-              <Button variant="outline" onClick={onClose} type="button">
+              <Button variant="outline" className="text-gray-800" onClick={onClose} type="button">
                 Cancel
               </Button>
               <Button type="submit" disabled={mutation.isPending}>
