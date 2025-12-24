@@ -1,9 +1,12 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import api from "@/api/api";
 import toast from "react-hot-toast";
 import { playSound } from "../Playsound";
 
-export default function OrderSidePanel({ order }) {
+export default function CreateOrderSidePanel({ order }) {
+  const [showCustomer, setShowCustomer] = useState(false);
+  const [showNote, setShowNote] = useState(false);
+
   const [orderData, setOrderData] = useState({
     items: [],
     table_id: null,
@@ -14,86 +17,95 @@ export default function OrderSidePanel({ order }) {
     order_note: "",
   });
 
-  const [showCustomer, setShowCustomer] = useState(false);
-  const [showNote, setShowNote] = useState(false);
-
+  /* Load incoming order/cart data */
   useEffect(() => {
-    if (order) {
-      setOrderData((prev) => ({
-        ...prev,
-        items: order.items?.map((i) => ({
+    if (!order) return;
+
+    setOrderData((prev) => ({
+      ...prev,
+      items:
+        order.items?.map((i) => ({
           ...i,
           qty: i.qty || i.quantity || 1,
           item_note: i.item_note || "",
         })) || [],
-        table_id: order.table_id || null,
-        table_no: order.table_no || null,
-      }));
-
-      if (order.customer_name || order.customer_phone) setShowCustomer(true);
-      if (order.order_note) setShowNote(true);
-    }
+      table_id: order.table_id || null,
+      table_no: order.table_no || null,
+    }));
   }, [order]);
 
+  /* Calculate totals */
   const totals = useMemo(() => {
-    let sub = 0, count = 0;
-    orderData.items.forEach((it) => {
-      sub += Number(it.qty) * Number(it.price);
-      count += Number(it.qty);
+    let total = 0;
+    let count = 0;
+    orderData.items.forEach((i) => {
+      total += Number(i.qty) * Number(i.price);
+      count += Number(i.qty);
     });
-    return { count, total: sub };
+    return { total, count };
   }, [orderData.items]);
 
+  /* Item actions */
   const updateQty = (id, type) => {
-    setOrderData((prev) => ({
-      ...prev,
-      items: prev.items.map((it) =>
-        it.id === id
-          ? { ...it, qty: type === "inc" ? it.qty + 1 : Math.max(1, it.qty - 1) }
-          : it
+    setOrderData((p) => ({
+      ...p,
+      items: p.items.map((i) =>
+        i.id === id
+          ? {
+              ...i,
+              qty: type === "inc" ? i.qty + 1 : Math.max(1, i.qty - 1),
+            }
+          : i
       ),
     }));
   };
 
   const updateItemNote = (id, note) => {
-    setOrderData((prev) => ({
-      ...prev,
-      items: prev.items.map((it) =>
-        it.id === id ? { ...it, item_note: note } : it
+    setOrderData((p) => ({
+      ...p,
+      items: p.items.map((i) =>
+        i.id === id ? { ...i, item_note: note } : i
       ),
     }));
   };
 
   const removeItem = (id) => {
-    setOrderData((prev) => ({
-      ...prev,
-      items: prev.items.filter((i) => i.id !== id),
+    setOrderData((p) => ({
+      ...p,
+      items: p.items.filter((i) => i.id !== id),
     }));
   };
 
+  
+
+  /* Create order */
   const createOrder = async () => {
-    if (!orderData.items.length) return toast.error("No items added!");
-    if (orderData.order_type === "dine_in" && !orderData.table_id)
+    if (!orderData.items.length)
+      return toast.error("No items added!");
+
+    if (orderData.order_type === "dine_in" && !orderData.table_id) {
       return toast.error("Please select a table");
+    }
 
     try {
-      const payload = {
+      await api.post("/restaurant/orders/create", {
         order_type: orderData.order_type,
-        table_id: orderData.order_type === "dine_in" ? orderData.table_id : null,
+        table_id:
+          orderData.order_type === "dine_in" ? orderData.table_id : null,
         customer_name: showCustomer ? orderData.customer_name || null : null,
         customer_phone: showCustomer ? orderData.customer_phone || null : null,
         order_note: showNote ? orderData.order_note || null : null,
         items: orderData.items.map((i) => ({
-          menu_item_id: i.id,
+          menu_item_id: i.menu_item_id || i.id, // fallback for temp items
           quantity: i.qty,
           item_note: i.item_note || null,
         })),
-      };
+      });
 
-      await api.post("/restaurant/orders/create", payload);
       playSound();
       toast.success("Order Created Successfully!");
 
+      // Reset form
       setOrderData({
         items: [],
         table_id: null,
@@ -105,28 +117,32 @@ export default function OrderSidePanel({ order }) {
       });
       setShowCustomer(false);
       setShowNote(false);
-    } catch (err) {
+    } catch {
       toast.error("Order Creation Failed");
     }
   };
 
   return (
-    <aside className="h-full bg-slate-900 text-white flex flex-col min-h-0">
-      {/* HEADER - Fixed */}
+    <aside className="h-full bg-slate-900 text-white flex flex-col">
+      {/* HEADER */}
       <div className="flex-shrink-0 px-6 py-5 border-b border-slate-800">
         <h2 className="text-xl font-bold">Create Order</h2>
       </div>
 
-      {/* BODY - Scrollable (Main Content) */}
-      <div className="flex-1 min-h-0 overflow-y-auto px-6 py-5">
-        <div className="space-y-6">
+      {/* SCROLLABLE BODY */}
+     <div className="flex-1 min-h-0 overflow-y-auto px-6 py-5">
+  <div className="space-y-6">
           {/* Order Type */}
-          <div>
-            <label className="text-sm uppercase text-slate-400 mb-2 block">Order Type</label>
+          <div className="flex-shrink-0">
+            <label className="text-sm uppercase text-slate-400 mb-2 block">
+              Order Type
+            </label>
             <select
               className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 focus:border-indigo-500 outline-none"
               value={orderData.order_type}
-              onChange={(e) => setOrderData((o) => ({ ...o, order_type: e.target.value }))}
+              onChange={(e) =>
+                setOrderData((o) => ({ ...o, order_type: e.target.value }))
+              }
             >
               <option value="dine_in">Dine-In</option>
               <option value="parcel">Parcel</option>
@@ -136,7 +152,7 @@ export default function OrderSidePanel({ order }) {
 
           {/* Table Info */}
           {orderData.order_type === "dine_in" && (
-            <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4">
+            <div className="flex-shrink-0 bg-slate-800/50 border border-slate-700 rounded-lg p-4">
               <p className="text-sm text-slate-400 mb-1">Selected Table</p>
               <p className="text-xl font-semibold">
                 {orderData.table_no || "No table selected"}
@@ -148,7 +164,7 @@ export default function OrderSidePanel({ order }) {
           )}
 
           {/* Customer */}
-          <div>
+          <div className="flex-shrink-0">
             {showCustomer ? (
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
@@ -156,7 +172,11 @@ export default function OrderSidePanel({ order }) {
                   <button
                     onClick={() => {
                       setShowCustomer(false);
-                      setOrderData((o) => ({ ...o, customer_name: "", customer_phone: "" }));
+                      setOrderData((o) => ({
+                        ...o,
+                        customer_name: "",
+                        customer_phone: "",
+                      }));
                     }}
                     className="text-sm text-red-400 hover:text-red-300"
                   >
@@ -168,7 +188,12 @@ export default function OrderSidePanel({ order }) {
                   placeholder="Customer Name"
                   className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 focus:border-indigo-500 outline-none"
                   value={orderData.customer_name}
-                  onChange={(e) => setOrderData((o) => ({ ...o, customer_name: e.target.value }))}
+                  onChange={(e) =>
+                    setOrderData((o) => ({
+                      ...o,
+                      customer_name: e.target.value,
+                    }))
+                  }
                 />
                 <input
                   type="tel"
@@ -176,7 +201,12 @@ export default function OrderSidePanel({ order }) {
                   maxLength="10"
                   className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 focus:border-indigo-500 outline-none"
                   value={orderData.customer_phone}
-                  onChange={(e) => setOrderData((o) => ({ ...o, customer_phone: e.target.value }))}
+                  onChange={(e) =>
+                    setOrderData((o) => ({
+                      ...o,
+                      customer_phone: e.target.value,
+                    }))
+                  }
                 />
               </div>
             ) : (
@@ -190,7 +220,7 @@ export default function OrderSidePanel({ order }) {
           </div>
 
           {/* Order Note */}
-          <div>
+          <div className="flex-shrink-0">
             {showNote ? (
               <div>
                 <div className="flex justify-between items-center mb-3">
@@ -210,7 +240,9 @@ export default function OrderSidePanel({ order }) {
                   placeholder="Eg: No onion, extra spicy..."
                   className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 resize-none focus:border-indigo-500 outline-none"
                   value={orderData.order_note}
-                  onChange={(e) => setOrderData((o) => ({ ...o, order_note: e.target.value }))}
+                  onChange={(e) =>
+                    setOrderData((o) => ({ ...o, order_note: e.target.value }))
+                  }
                 />
               </div>
             ) : (
@@ -223,50 +255,80 @@ export default function OrderSidePanel({ order }) {
             )}
           </div>
 
-          {/* Items List */}
-          <div>
-            <p className="text-sm uppercase text-slate-400 mb-4">Order Items</p>
-            {orderData.items.length > 0 ? (
-              <div className="space-y-4 pb-20"> {/* Extra bottom padding for safety */}
-                {orderData.items.map((it) => (
-                  <div key={it.id} className="bg-slate-800/50 border border-slate-700 rounded-xl p-5">
-                    <div className="flex justify-between items-start mb-4">
-                      <h4 className="font-semibold text-lg">{it.name}</h4>
-                      <span className="font-bold text-indigo-400">
-                        ₹{(it.qty * it.price).toFixed(2)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center mb-4">
-                      <div className="flex items-center bg-slate-700 rounded-full overflow-hidden">
-                        <button onClick={() => updateQty(it.id, "dec")} className="px-4 py-2 hover:bg-slate-600 text-lg transition">−</button>
-                        <span className="px-8 py-2 font-semibold text-lg">{it.qty}</span>
-                        <button onClick={() => updateQty(it.id, "inc")} className="px-4 py-2 hover:bg-slate-600 text-lg transition">+</button>
+          {/* Items Section - Takes remaining space */}
+          <div className="flex-1 flex flex-col min-h-0">
+          
+
+            {/* Scrollable Items List */}
+            <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+              {orderData.items.length > 0 ? (
+                <>
+                  {orderData.items.map((it) => (
+                    <div
+                      key={it.id}
+                      className="bg-slate-800/50 border border-slate-700 rounded-xl p-5"
+                    >
+                      <div className="flex justify-between items-start mb-4">
+                        <h4 className="font-semibold text-lg">{it.name}</h4>
+                        <span className="font-bold text-indigo-400">
+                          ₹{(it.qty * it.price).toFixed(2)}
+                        </span>
                       </div>
-                      <button onClick={() => removeItem(it.id)} className="text-red-400 hover:text-red-300 px-4 py-2 hover:bg-slate-700 rounded-lg font-medium">
-                        Remove
-                      </button>
+
+                      <div className="flex justify-between items-center mb-4">
+                        <div className="flex items-center bg-slate-700 rounded-full overflow-hidden">
+                          <button
+                            onClick={() => updateQty(it.id, "dec")}
+                            className="px-5 py-2 hover:bg-slate-600 text-lg transition"
+                          >
+                            −
+                          </button>
+                          <span className="px-8 py-2 font-semibold text-lg">
+                            {it.qty}
+                          </span>
+                          <button
+                            onClick={() => updateQty(it.id, "inc")}
+                            className="px-5 py-2 hover:bg-slate-600 text-lg transition"
+                          >
+                            +
+                          </button>
+                        </div>
+
+                        <button
+                          onClick={() => removeItem(it.id)}
+                          className="text-red-400 hover:text-red-300 px-4 py-2 hover:bg-slate-700 rounded-lg font-medium transition"
+                        >
+                          Remove
+                        </button>
+                      </div>
+
+                      <textarea
+                        rows={2}
+                        placeholder="Item note (optional)"
+                        className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-sm resize-none focus:border-indigo-500 outline-none"
+                        value={it.item_note}
+                        onChange={(e) => updateItemNote(it.id, e.target.value)}
+                      />
                     </div>
-                    <textarea
-                      rows={2}
-                      placeholder="Item note (optional)"
-                      className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-sm resize-none focus:border-indigo-500 outline-none"
-                      value={it.item_note}
-                      onChange={(e) => updateItemNote(it.id, e.target.value)}
-                    />
+                  ))}
+
+                  {/* Spacer to prevent last item from hiding under footer */}
+                  <div className="h-32" />
+                </>
+              ) : (
+                <div className="flex-1 flex items-center justify-center text-center text-slate-500">
+                  <div>
+                    <p className="text-lg">No items added yet</p>
+                    <p className="text-sm mt-2">Tap "+ Add Item" to start</p>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-16 text-slate-500">
-                <p className="text-lg">No items added yet</p>
-                <p className="text-sm mt-2">Add items from the menu</p>
-              </div>
-            )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* FOOTER - Always Visible */}
+      {/* FIXED FOOTER */}
       <div className="flex-shrink-0 border-t border-slate-800 bg-slate-950 p-6 space-y-4">
         <div className="flex justify-between text-lg">
           <span className="text-slate-400">Total Items</span>
@@ -283,6 +345,8 @@ export default function OrderSidePanel({ order }) {
           CREATE ORDER
         </button>
       </div>
+
+      
     </aside>
   );
 }

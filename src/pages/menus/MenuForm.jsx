@@ -49,11 +49,11 @@ const MenuForm = ({ menu, onClose }) => {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <Card className="w-[90%] max-w-md">
-        <CardHeader>
+      <Card className="w-[90%] max-w-md bg-gray-900">
+        <CardHeader className="text-gray-300">
           <CardTitle>{menu ? "Edit Menu" : "Add Menu"}</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="text-gray-200 ">
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <Input
               placeholder="Enter menu name (e.g., Breakfast)"
@@ -66,7 +66,7 @@ const MenuForm = ({ menu, onClose }) => {
               <Button variant="outline" className="text-gray-800" onClick={onClose} type="button">
                 Cancel
               </Button>
-              <Button type="submit" disabled={mutation.isPending}>
+              <Button type="submit" className="bg-green-600 hover:bg-green-700" disabled={mutation.isPending}>
                 {mutation.isPending ? "Saving..." : "Save"}
               </Button>
             </div>

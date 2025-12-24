@@ -1,18 +1,15 @@
-import React, { useState,useRef,useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import api from "@/api/api";
+import React, { useState, useRef, useEffect } from "react";
 import toast from "react-hot-toast";
-
 
 import OrderCard from "../components/DashboardComponents/OrderCard";
 import OrderSidePanelOrders from "../components/pos/OrderSidePanelOrders";
 import { playSound } from "../components/Playsound";
+import useOrdersManager from "@/hooks/useOrdersManager";
 
 export default function KOT() {
-  const navigate = useNavigate();
-  const qc = useQueryClient();
-
+  /* =========================
+     LOCAL UI STATES (UNCHANGED)
+  ========================= */
   const [dateRangeType, setDateRangeType] = useState("today");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -21,112 +18,77 @@ export default function KOT() {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [openPanel, setOpenPanel] = useState(false);
 
-  // ✅ Pagination State
+  // Pagination
   const [page, setPage] = useState(1);
 
-  // ⭐ NEW ORDER DETECTOR FOR KOT PAGE
-const lastKotCount = useRef(null);
+  // 🔔 New KOT detector
+  const lastKotCount = useRef(null);
 
-
-
-  // ✅ Fetch orders based on filters + pagination
-  const { data, isLoading } = useQuery({
+  /* =========================
+     DATA + UPDATE (FROM HOOK)
+  ========================= */
+  const { ordersQuery, handleSaveOrder } = useOrdersManager({
     queryKey: ["kotOrders", page, dateRangeType, startDate, endDate],
-    queryFn: async () => {
-      const res = await api.get("/restaurant/orders/filter", {
-        params: { page, per_page: 9, dateRangeType, startDate, endDate },
-      });
-      return res.data;
-    },
-    keepPreviousData: true,
-    refetchOnWindowFocus: true,
-    staleTime: 0,
+    fetchParams: () => ({
+      page,
+      per_page: 9,
+      dateRangeType,
+      startDate,
+      endDate,
+    }),
   });
 
-  const orders = data?.data ?? [];
-  const pagination = data?.pagination ?? {};
+  const orders = ordersQuery.data?.data ?? [];
+  const pagination = ordersQuery.data?.pagination ?? {};
+  const isLoading = ordersQuery.isLoading;
 
+  /* =========================
+     NEW KOT SOUND (UNCHANGED)
+  ========================= */
+  useEffect(() => {
+    if (!orders.length) return;
 
-  
-useEffect(() => {
-  if (!orders) return;
+    const kotOnly = orders.filter((o) => o.status === "kot");
+    const current = kotOnly.length;
 
-  const kotOnly = orders.filter(o => o.status === "kot");
-  const current = kotOnly.length;
-
-  // first load – don't alert
-  if (lastKotCount.current === null) {
-    lastKotCount.current = current;
-    return;
-  }
-
-  // NEW KOT ARRIVED 🔥
-  if (current > lastKotCount.current) {
-    playSound();
-    toast.success("🧾 New KOT Received!");
-  }
-
-  lastKotCount.current = current;
-}, [orders]);
-  // ✅ Update Order
-  const updateOrder = useMutation({
-    mutationFn: (payload) => api.post("/restaurant/orders/update", payload),
-    onSuccess: () => {
-      qc.invalidateQueries(["kotOrders"]);
-      playSound()
-      toast.success("Order updated Successfully")
-      setOpenPanel(false);
-    },
-    onError:()=>{
-      toast.error("Failed to Update Order")
+    if (lastKotCount.current === null) {
+      lastKotCount.current = current;
+      return;
     }
-  });
 
-  const handleSaveOrder = (updatedOrder, deletedItems = []) => {
-    updateOrder.mutate({
-      order_id: updatedOrder.id,
-      status: updatedOrder.status,
-      payment_status: updatedOrder.payment_status,
-      payment_method: updatedOrder.payment_method,
-       order_note: updatedOrder.order_note,
-      items: updatedOrder.items.map((it) => ({
-        order_item_id: it.id,
-        quantity: it.quantity,
-        item_note: it.item_note,
-      })),
-      deleted_items: deletedItems,
-    });
-  };
+    if (current > lastKotCount.current) {
+      playSound();
+      toast.success("🧾 New KOT Received!");
+    }
 
-  // ✅ Hide pending orders + apply filter
+    lastKotCount.current = current;
+  }, [orders]);
+
+  /* =========================
+     FILTER LOGIC (UNCHANGED)
+  ========================= */
   const displayedOrders = orders
-    .filter((o) => o.status !== "pending") // ✅ remove pending
+    .filter((o) => o.status !== "pending")
     .filter((o) => {
       if (!statusFilter) return true;
       return o.status === statusFilter;
     });
 
+  /* =========================
+     UI
+  ========================= */
   return (
     <div className="p-4 bg-gray dark:bg-gray-800 dark:border-gray-700">
-
       {/* Header */}
       <div className="flex justify-between mb-4">
         <h1 className="text-xl font-semibold dark:text-white">
           Orders ({pagination.total ?? displayedOrders.length})
         </h1>
-
-        {/* <button
-          onClick={() => navigate("dashboard/pos")}
-          className="bg-orange-600 text-white px-5 py-2.5 rounded-lg"
-        >
-          + New Order
-        </button> */}
       </div>
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3 items-center">
-
-        {/* Date Range Dropdown */}
+        {/* Date Range */}
         <select
           value={dateRangeType}
           onChange={(e) => setDateRangeType(e.target.value)}
@@ -140,7 +102,7 @@ useEffect(() => {
           <option value="custom">Custom Range</option>
         </select>
 
-        {/* Custom Date Range */}
+        {/* Custom Dates */}
         {dateRangeType === "custom" && (
           <div className="flex items-center gap-2">
             <input
@@ -159,56 +121,64 @@ useEffect(() => {
           </div>
         )}
 
-        {/* Status filters */}
+        {/* Status Buttons */}
         <button
           onClick={() => setStatusFilter("")}
           className={`px-3 py-1 rounded-md border ${
-            statusFilter === "" ? "bg-orange-600 text-white" : "bg-gray-800 text-gray-300"
+            statusFilter === ""
+              ? "bg-orange-600 text-white"
+              : "bg-gray-800 text-gray-300"
           }`}
         >
-          All ({orders.filter(o => o.status !== "pending").length})
+          All ({orders.filter((o) => o.status !== "pending").length})
         </button>
-
-          
 
         <button
           onClick={() => setStatusFilter("kot")}
           className={`px-3 py-1 rounded-md border ${
-            statusFilter === "kot" ? "bg-orange-600 text-white" : "bg-gray-800 text-gray-300"
+            statusFilter === "kot"
+              ? "bg-orange-600 text-white"
+              : "bg-gray-800 text-gray-300"
           }`}
         >
-          kot({orders.filter(o => o.status === "kot").length})
+          KOT ({orders.filter((o) => o.status === "kot").length})
         </button>
+
         <button
           onClick={() => setStatusFilter("preparing")}
           className={`px-3 py-1 rounded-md border ${
-            statusFilter === "preparing" ? "bg-orange-600 text-white" : "bg-gray-800 text-gray-300"
+            statusFilter === "preparing"
+              ? "bg-orange-600 text-white"
+              : "bg-gray-800 text-gray-300"
           }`}
         >
-          In Kitchen ({orders.filter(o => o.status === "preparing").length})
+          In Kitchen ({orders.filter((o) => o.status === "preparing").length})
         </button>
-        
 
         <button
           onClick={() => setStatusFilter("served")}
           className={`px-3 py-1 rounded-md border ${
-            statusFilter === "served" ? "bg-orange-600 text-white" : "bg-gray-800 text-gray-300"
+            statusFilter === "served"
+              ? "bg-orange-600 text-white"
+              : "bg-gray-800 text-gray-300"
           }`}
         >
-          Served ({orders.filter(o => o.status === "served").length})
+          Served ({orders.filter((o) => o.status === "served").length})
         </button>
 
         <button
           onClick={() => setStatusFilter("completed")}
           className={`px-3 py-1 rounded-md border ${
-            statusFilter === "completed" ? "bg-orange-600 text-white" : "bg-gray-800 text-gray-300"
+            statusFilter === "completed"
+              ? "bg-orange-600 text-white"
+              : "bg-gray-800 text-gray-300"
           }`}
         >
-          Completed ({orders.filter(o => o.status === "completed").length})
+          Completed ({orders.filter((o) => o.status === "completed").length})
         </button>
       </div>
 
-      {/* Orders List */}
+      {/* Orders Grid */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
         {isLoading ? (
           <p className="text-gray-400">Loading orders...</p>
@@ -223,7 +193,7 @@ useEffect(() => {
               paymentStatus={order.payment_status}
               time={new Date(order.created_at).toLocaleString()}
               items={`${order.items?.length ?? 0} Item(s)`}
-              total={`₹${order.total_amount}`}
+              total={`${order.total_amount}`}
               onClick={() => {
                 setSelectedOrder(order);
                 setOpenPanel(true);
@@ -235,7 +205,7 @@ useEffect(() => {
         )}
       </div>
 
-      {/* ✅ Pagination Section */}
+      {/* Pagination */}
       <div className="flex justify-center items-center gap-4 mt-6">
         <button
           disabled={page === 1}
@@ -246,7 +216,8 @@ useEffect(() => {
         </button>
 
         <span className="text-gray-300">
-          Page {pagination.current_page ?? page} of {pagination.last_page ?? 1}
+          Page {pagination.current_page ?? page} of{" "}
+          {pagination.last_page ?? 1}
         </span>
 
         <button
@@ -258,7 +229,7 @@ useEffect(() => {
         </button>
       </div>
 
-      {/* Order Edit Panel */}
+      {/* Side Panel */}
       <OrderSidePanelOrders
         open={openPanel}
         onClose={() => setOpenPanel(false)}

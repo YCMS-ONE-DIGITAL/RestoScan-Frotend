@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import api from "@/api/api";
+import AddItemModal from "../AddItemModal";
 
 export default function OrderSidePanelOrders({ open, onClose, order, onSave }) {
   const [orderData, setOrderData] = useState({
@@ -14,6 +15,7 @@ export default function OrderSidePanelOrders({ open, onClose, order, onSave }) {
     customer: null,
   });
 
+  const[showAddItem, setShowAddItem] = useState(false)
   const [deletedItems, setDeletedItems] = useState([]);
 
   useEffect(() => {
@@ -64,6 +66,8 @@ export default function OrderSidePanelOrders({ open, onClose, order, onSave }) {
     }));
   };
 
+
+
   const updateItemNote = (id, note) => {
     setOrderData((prev) => ({
       ...prev,
@@ -71,16 +75,23 @@ export default function OrderSidePanelOrders({ open, onClose, order, onSave }) {
     }));
   };
 
-  const removeItem = (id) => {
-    setOrderData((prev) => ({
-      ...prev,
-      items: prev.items.filter((i) => i.id !== id),
-    }));
-    setDeletedItems((prev) => [...prev, id]);
-  };
+ const removeItem = (item) => {
+  // UI मधून remove
+  setOrderData((prev) => ({
+    ...prev,
+    items: prev.items.filter((i) => i.id !== item.id),
+  }));
+
+  // ⭐ फक्त DB item delete list मध्ये
+  if (!item.is_new) {
+    setDeletedItems((prev) => [...prev, item.id]);
+  }
+};
+
 
   const handleSave = () => {
     onSave(orderData, deletedItems);
+    onClose();
   };
 
   const handlePrintBill = () => {
@@ -105,6 +116,45 @@ export default function OrderSidePanelOrders({ open, onClose, order, onSave }) {
 
     document.body.appendChild(iframe);
   };
+
+
+  
+  const handleAddItem = (newItems) => {
+  console.log("SIDE PANEL → received:", newItems); // 🔴 ADD THIS
+
+  setOrderData((prev) => {
+    const items = [...prev.items];
+
+    newItems.forEach((item) => {
+      console.log("ADDING ITEM:", item); // 🔴 ADD THIS
+
+      const index = items.findIndex(
+        (i) => i.menu_item_id === item.id
+      );
+
+      if (index !== -1) {
+        items[index] = {
+          ...items[index],
+          quantity: items[index].quantity + item.quantity,
+        };
+      } else {
+        items.push({
+          id: `new-${item.id}-${Date.now()}`,
+          menu_item_id: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          item_note: "",
+          is_new: true,
+        });
+      }
+    });
+
+    return { ...prev, items };
+  });
+};
+
+
 
   if (!open) return null;
 
@@ -217,6 +267,14 @@ export default function OrderSidePanelOrders({ open, onClose, order, onSave }) {
 
             {/* Items Table */}
             <div>
+                        {/* ADD ITEM */}
+
+               <button
+  onClick={() => setShowAddItem(true)}
+  className="mb-3 w-full bg-indigo-600 hover:bg-indigo-700 p-2 rounded text-sm font-medium"
+>
+  + Add Item
+</button>
               <table className="w-full text-sm">
                 <thead className="bg-gray-700">
                   <tr>
@@ -227,6 +285,7 @@ export default function OrderSidePanelOrders({ open, onClose, order, onSave }) {
                   </tr>
                 </thead>
                 <tbody>
+                 
                   {orderData.items.length > 0 ? (
                     orderData.items.map((it) => (
                       <React.Fragment key={it.id}>
@@ -255,7 +314,7 @@ export default function OrderSidePanelOrders({ open, onClose, order, onSave }) {
                           <td className="p-2 text-right">
                             <button
                               className="text-red-500 text-xs"
-                              onClick={() => removeItem(it.id)}
+                              onClick={() => removeItem(it)}
                             >
                               Remove
                             </button>
@@ -272,7 +331,10 @@ export default function OrderSidePanelOrders({ open, onClose, order, onSave }) {
                             />
                           </td>
                         </tr>
+                        {/* Add Item Button */}
+
                       </React.Fragment>
+                      
                     ))
                   ) : (
                     <tr>
@@ -315,6 +377,12 @@ export default function OrderSidePanelOrders({ open, onClose, order, onSave }) {
           </button>
         </div>
       </aside>
+      <AddItemModal
+  open={showAddItem}
+  onClose={() => setShowAddItem(false)}
+  onAdd={handleAddItem}
+/>
+
     </>
   );
 }

@@ -23,7 +23,7 @@ export default function TableList() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editTable, setEditTable] = useState(null);
   const [selectedTableForQR, setSelectedTableForQR] = useState(null);
-  
+
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
 
@@ -64,7 +64,7 @@ export default function TableList() {
   });
 
   return (
-    <div className="p-6">
+    <div className="p-4">
       <div className="flex justify-between">
         <h2 className="text-2xl font-semibold text-white">Tables</h2>
         <Button className="bg-green-600" onClick={() => setIsModalOpen(true)}>
@@ -80,17 +80,17 @@ export default function TableList() {
             <Card key={table.id} className="bg-gray-800 text-white">
               <CardHeader className="flex justify-between">
                 <CardTitle>Table {table.table_no}</CardTitle>
-                <span   className={
-    table.status === "available"
-      ? "px-2 py-1 text-xs rounded-full bg-green-500/20 text-green-400"
-      : table.status === "occupied"
-      ? "px-2 py-1 text-xs rounded-full bg-red-500/20 text-red-400"
-      : "px-2 py-1 text-xs rounded-full bg-gray-500/20 text-gray-400"
-  }>
+                <span className={
+                  table.status === "available"
+                    ? "px-2 py-1 text-xs rounded-full bg-green-500/20 text-green-400"
+                    : table.status === "occupied"
+                      ? "px-2 py-1 text-xs rounded-full bg-red-500/20 text-red-400"
+                      : "px-2 py-1 text-xs rounded-full bg-gray-500/20 text-gray-400"
+                }>
                   {table.status}
                 </span>
 
-             
+
               </CardHeader>
 
               <CardContent>
@@ -111,21 +111,21 @@ export default function TableList() {
                 </Button>
 
                 <Button
-                    variant="destructive"
-                    className="flex"
-                    onClick={() => {
-                      setDeleteId(table.id);
-                      setConfirmOpen(true);
-                    }}
-                    disabled={deleteMutation.isPending}
-                  >
-                    {deleteMutation.isPending ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Trash2 className="w-4 h-4" />
-                    )}
-                    Delete
-                  </Button>
+                  variant="destructive"
+                  className="flex"
+                  onClick={() => {
+                    setDeleteId(table.id);
+                    setConfirmOpen(true);
+                  }}
+                  disabled={deleteMutation.isPending}
+                >
+                  {deleteMutation.isPending ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="w-4 h-4" />
+                  )}
+                  Delete
+                </Button>
 
                 <Button
                   size="sm"
@@ -145,7 +145,7 @@ export default function TableList() {
       {isModalOpen && (
         <AddEditTableModal
           isOpen={isModalOpen}
-          
+
           onClose={() => {
             setIsModalOpen(false);
             setEditTable(null);
@@ -165,21 +165,21 @@ export default function TableList() {
       />
 
 
-       <ConfirmBox
-              open={confirmOpen}
-              onClose={() => setConfirmOpen(false)}
-              title="Delete Menu?"
-              message={
-                deleteId
-                  ? `Are you sure you want to delete "${tables.find(t => t.id === deleteId)?.table_no || ""}"?`
-                  : ""
-              }
-              onConfirm={() => {
-                deleteMutation.mutate(deleteId);
-                setConfirmOpen(false);
-              }}
+      <ConfirmBox
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        title="Delete Menu?"
+        message={
+          deleteId
+            ? `Are you sure you want to delete "${tables.find(t => t.id === deleteId)?.table_no || ""}"?`
+            : ""
+        }
+        onConfirm={() => {
+          deleteMutation.mutate(deleteId);
+          setConfirmOpen(false);
+        }}
 
-            />
+      />
     </div>
   );
 }

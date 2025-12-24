@@ -1,10 +1,10 @@
 // Dashboard.jsx
 import { useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "react-router-dom";
 
 import api from "@/api/api";
 import toast from "react-hot-toast";
+
 import StatCard from "../components/DashboardComponents/StatCard";
 import SalesChartCard from "../components/DashboardComponents/SalesChartCard";
 import OrderCard from "../components/DashboardComponents/OrderCard";
@@ -12,18 +12,26 @@ import SalesChart from "../components/DashboardComponents/SalesChart";
 import OrderSidePanelOrders from "../components/pos/OrderSidePanelOrders";
 import { playSound } from "../components/Playsound";
 
+import useOrdersManager from "@/hooks/useOrdersManager";
+import { useQuery } from "@tanstack/react-query";
 
 export default function Dashboard() {
-  const qc = useQueryClient();
+  const location = useLocation();
+
+  /* =========================
+     ORDER PANEL STATE
+  ========================= */
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [openPanel, setOpenPanel] = useState(false);
-const location = useLocation();
 
-  // ⭐ NEW STATE – store previous order count
+  /* =========================
+     NEW ORDER SOUND TRACKER
+  ========================= */
   const [lastOrderCount, setLastOrderCount] = useState(0);
 
-
-  // SOUND UNLOCK
+  /* =========================
+     SOUND UNLOCK (UNCHANGED)
+  ========================= */
   useEffect(() => {
     const dummy = new Audio("/sounds/ordersound.mp3");
     dummy.volume = 0;
@@ -34,93 +42,70 @@ const location = useLocation();
     };
 
     window.addEventListener("click", unlock);
-
-    return () => {
-      window.removeEventListener("click", unlock);
-    };
+    return () => window.removeEventListener("click", unlock);
   }, []);
 
-
-  // ⭐ Fetch Dashboard Stats + Today Orders
+  /* =========================
+     DASHBOARD STATS QUERY
+  ========================= */
   const { data, isLoading } = useQuery({
     queryKey: ["dashboardStats"],
     queryFn: async () => {
       const res = await api.get("/restaurant/dashboard/stats");
       return res.data;
     },
-    refetchInterval: 7000, // auto refresh every 7 seconds
+    refetchInterval: 7000,
   });
 
   const raw = data ?? {};
   const stats = raw.data ?? raw;
   const orders = stats.orders ?? [];
 
-  // ⭐ DETECT NEW ORDER AUTOMATICALLY
-  // ⭐ Detect new order GLOBAL (kuthlya page var aslo tari work hoil)
+  /* =========================
+     GLOBAL NEW ORDER DETECTOR
+  ========================= */
   useEffect(() => {
-    if (!orders) return;
+    if (!orders.length) return;
 
     const currentCount = orders.length;
 
-    // First load → do NOT play sound
     if (lastOrderCount === 0) {
       setLastOrderCount(currentCount);
       return;
     }
 
-    // NEW ORDER ARRIVED
     if (currentCount > lastOrderCount) {
-      playSound(); // 🔊 global sound
+      playSound();
       toast.success("🔥 New Order Received!");
     }
 
     setLastOrderCount(currentCount);
   }, [orders]);
 
-
-
-  // ⭐ Update Order
-  const updateOrder = useMutation({
-    mutationFn: async (payload) =>
-      api.post("/restaurant/orders/update", payload),
-    onSuccess: () => {
-      qc.invalidateQueries(["dashboardStats"]);
-      playSound();
-      toast.success("Order Updated Successfully");
-      setOpenPanel(false);
-    },
-    onError: () => {
-      toast.error("failed to update order");
-    },
+  /* =========================
+     ORDER UPDATE (HOOK)
+  ========================= */
+  const { handleSaveOrder } = useOrdersManager({
+    queryKey: ["dashboardStats"],
+    fetchParams: () => ({}), // not used here, but required by hook
   });
 
-  const handleSaveOrder = (updatedOrder, deletedItems = []) => {
-    updateOrder.mutate({
-      order_id: updatedOrder.id,
-      status: updatedOrder.status,
-      payment_status: updatedOrder.payment_status,
-      payment_method: updatedOrder.payment_method,
-      order_note: updatedOrder.order_note,
-      items: updatedOrder.items.map((it) => ({
-        order_item_id: it.id,
-        quantity: it.quantity,
-        item_note: it.item_note,
-      })),
-      deleted_items: deletedItems,
-    });
-  };
-
+  /* =========================
+     UI
+  ========================= */
   return (
     <div>
       {/* HEADER */}
       <div className="bg-gray block dark:bg-gray-800 dark:border-gray-700">
         <div className="flex justify-between">
-          <h1 className="text-xl font-semibold dark:text-white">Dashboard</h1>
+          <h1 className="text-xl font-semibold dark:text-white">
+            Dashboard
+          </h1>
         </div>
       </div>
 
       <div className="grid lg:grid-cols-3">
-        {/* LEFT - Stats + Graph */}
+        {/* LEFT – STATS */}
         <div className="col-span-2 p-4">
           <h1 className="text-xl font-semibold dark:text-white mb-4 px-4">
             Statistics
@@ -155,7 +140,7 @@ const location = useLocation();
           </div>
         </div>
 
-        {/* RIGHT - Today Orders */}
+        {/* RIGHT – TODAY ORDERS */}
         <div className="p-4 flex flex-col gap-3 max-h-[85vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-gray-900/20">
           <div className="p-4 flex flex-col gap-3">
             <h1 className="text-xl font-semibold dark:text-white mb-4">
@@ -190,7 +175,7 @@ const location = useLocation();
         </div>
       </div>
 
-      {/* ORDER PANEL */}
+      {/* ORDER SIDE PANEL */}
       <OrderSidePanelOrders
         open={openPanel}
         onClose={() => {

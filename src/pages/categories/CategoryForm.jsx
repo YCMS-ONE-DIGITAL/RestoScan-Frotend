@@ -138,7 +138,7 @@ const CategoryForm = ({ category, onClose }) => {
               <Button variant="outline" className="text-gray-800" type="button" onClick={onClose}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={mutation.isPending}>
+              <Button type="submit" className="bg-green-600 hover:bg-green-700" disabled={mutation.isPending}>
                 {mutation.isPending ? "Saving..." : category ? "Update" : "Create"}
               </Button>
             </div>
